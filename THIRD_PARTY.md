@@ -1,8 +1,9 @@
 # Third-party notices
 
 Project Python code and documentation are MIT licensed; see LICENSE.
-No vendored Python packages, kernel sources, or upstream mixer profile files
-are included in the source release.
+The `driver/` kernel module is GPL-2.0-only, separately from the MIT application.
+See driver/README.md and driver/COPYING for provenance and terms. No vendored
+Python packages or upstream mixer profiles are included.
 
 The audio tool reads and modifies copies of the **installed** PipeWire ALSA Card
 Profile files at runtime. Those files originate from the PulseAudio/ACP codebase

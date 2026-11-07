@@ -2,7 +2,10 @@
 
 Portable scripts for **Panasonic Toughbook CF-19** finger-touch calibration and
 internal-speaker repair on a standard Fedora desktop. Version **0.0.1**, MIT.
-Run with the system Python from Bash, fish, or another shell; no pip, virtual
+The optional experimental tablet-button feature adds a kernel module and a
+per-user session helper; see [Toughbook Buttons](docs/tablet-buttons.md).
+
+Run the audio/calibration tools with the system Python from Bash, fish, or another shell; no pip, virtual
 environment, shell change, custom kernel module, or permanent service is needed.
 
 ## Compatibility
@@ -11,6 +14,7 @@ environment, shell change, custom kernel module, or permanent service is needed.
 | --- | --- | --- |
 | Finger calibration | Fedora KDE, Wayland | Original workflow hardware-tested on Fedora 44, CF-19 Mk6, Wacom `056a:0093` |
 | Finger calibration | Fedora Workstation GNOME, Wayland | Experimental; implemented and simulated, physical GNOME validation pending |
+| Tablet buttons | Fedora 44 KDE, Wayland, CF-19 Mk6 (`CF19-6`) | Driver, four defaults, custom app, rotated touch and suspend/resume and login persistence hardware-tested |
 | Internal speaker | Fedora PipeWire + WirePlumber 0.5+ (KDE or GNOME) | Original workflow hardware-tested on Fedora 44, CF-19 Mk6, Realtek ALC269VC |
 
 The public-release refactor has automated tests but has **not** been reapplied to
@@ -159,3 +163,7 @@ python3 tools/make-release.py
 See [validation](docs/VALIDATION.md), [third-party notices](THIRD_PARTY.md), and
 [the changelog](CHANGELOG.md). No uploaded release or remote repository is created
 by these tools or the archive builder.
+
+## Configurable tablet buttons
+
+Run `python3 toughbook-buttons.py --help` or see the [setup and customization guide](docs/tablet-buttons.md). The GTK4 app includes defaults, custom applications/commands, driver/session status, and live identification. The driver builds against the target Fedora kernel and the KDE workflows are hardware-tested on the Mk6. Login autostart and saved assignments survive logout/login; GNOME remains awaiting physical validation.

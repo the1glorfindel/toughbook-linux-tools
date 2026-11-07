@@ -13,13 +13,19 @@ sys.path.insert(0, str(ROOT))
 from toughbook import __version__
 
 TOP = {'README.md', 'LICENSE', 'THIRD_PARTY.md', 'CHANGELOG.md', '.gitignore',
-       'calibrate-screen.py', 'fix-audio.py'}
+       'calibrate-screen.py', 'fix-audio.py', 'toughbook-buttons.py'}
 
 
 def release_files(root=ROOT):
     result = [root/name for name in TOP]
     for folder, suffix in [('toughbook','.py'), ('tests','.py'), ('tools','.py'), ('docs','.md')]:
         result += [p for p in (root/folder).rglob('*'+suffix) if '__pycache__' not in p.parts]
+    result += [root/'data'/name for name in ('org.toughbook.Buttons.desktop.in',
+        'org.toughbook.Buttons-autostart.desktop', 'toughbook-buttons.service.in')]
+    driver_names = {'panasonic-hbtn.c', 'hbtn-decode.h', 'Makefile', 'dkms.conf',
+                    'install.sh', 'uninstall.sh', 'README.md', 'COPYING',
+                    '70-panasonic-hbtn.rules', 'test-hbtn-decode.c'}
+    result += [root/'driver'/name for name in driver_names]
     if not all(p.is_file() and not p.is_symlink() for p in result):
         raise RuntimeError('A required release source is missing or is a symlink.')
     return sorted(result, key=lambda p: str(p.relative_to(root)))
@@ -35,7 +41,7 @@ def build(destination):
             data = path.read_bytes()
             info.size, info.mtime, info.uid, info.gid = len(data), 0, 0, 0
             info.uname = info.gname = ''
-            info.mode = 0o755 if relative.name in {'calibrate-screen.py','fix-audio.py','make-release.py'} else 0o644
+            info.mode = 0o755 if relative.name in {'calibrate-screen.py','fix-audio.py','make-release.py','toughbook-buttons.py','install.sh','uninstall.sh'} else 0o644
             archive.addfile(info, io.BytesIO(data))
     destination.mkdir(parents=True, exist_ok=True)
     path = destination/f'{name}.tar.gz'

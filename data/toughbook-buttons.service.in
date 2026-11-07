@@ -1,0 +1,8 @@
+[Unit]
+Description=Toughbook tablet shortcut portal session
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=@SERVICE_EXEC@ --daemon

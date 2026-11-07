@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Toughbook Buttons
+Comment=Configure CF-19 tablet buttons
+Icon=input-keyboard
+Exec=@PYTHON_EXEC@
+Terminal=false
+Categories=Settings;HardwareSettings;

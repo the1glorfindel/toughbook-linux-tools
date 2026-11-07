@@ -8,3 +8,13 @@ __pycache__/
 *-backup-*.json
 *-report*.txt
 calibration-result.json
+
+# External kernel module build output
+/driver/*.o
+/driver/*.ko
+/driver/*.mod
+/driver/*.mod.c
+/driver/.*.cmd
+/driver/Module.symvers
+/driver/modules.order
+/driver/.tmp_versions/

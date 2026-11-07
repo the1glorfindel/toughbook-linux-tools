@@ -78,3 +78,43 @@ sensor/codec IDs. Do not mark an item passed solely because its simulation passe
 - Confirm helpful failures when a required dependency is absent.
 - Verify the checksum, run tests from the extracted archive, and review its file list.
 - Promote GNOME from experimental only after the physical GNOME checks pass.
+
+## Tablet buttons (unreleased)
+
+Hardware validation on Fedora 44 KDE Wayland, CF-19 Mk6 (`CF19-6`), running
+`7.2.15-200.fc44.x86_64`:
+
+- The module builds for the running kernel; portable C decoder tests compile with
+  `-std=c99 -Wall -Wextra -Werror`. BTF generation is skipped without vmlinux/pahole;
+  module linking and DKMS installation succeed. DKMS signs the installed module.
+- The user’s ordered physical test established full HINF pairs `0x3a/0x3b`
+  (Keyboard), `0x38/0x39` (Circle), `0x36/0x37` (Screen/Rotation), and `0x34/0x35`
+  (Key). The driver accepts those exact pairs and rejects unknown firmware values.
+- Dedicated-device monitoring confirmed F13–F16 press/release pairs without a
+  device grab or ordinary-keyboard monitoring. A narrowly matched udev rule grants
+  the active user access and marks the four-key device as a keyboard for libinput.
+- KWin recognizes the device. The Global Shortcuts portal grants the physical
+  desktop keysyms: Tools, Launch (5), Launch (6), Launch (7), respectively. Conflicts
+  and the provisional shifted bindings were corrected through the portal dialog.
+- The user confirmed all four defaults, keyboard toggling, application menu,
+  rotation through four orientations with accurate finger touch, and session lock.
+  The calibration matrix and touchscreen output mapping match the saved baseline.
+- The user confirmed GUI customization with Emoji Selector on Circle, then
+  suspend/resume and working buttons afterward. Kernel logs confirm a deep S3
+  suspend and resume. The user’s custom Circle assignment is retained.
+- Driver removal/reinstallation was exercised during bring-up. Live per-user
+  uninstall removed app, menu, autostart and service entries; reinstall restored
+  them. Preferences were byte-for-byte unchanged. Desktop entries and the user
+  service pass their installed validators. The helper is left running.
+- All 72 automated tests pass, including decoder vectors, argument handling,
+  persistence, discovery, portal requests/conflicts/restarts, duplicate activation
+  suppression, mocked desktop actions/recovery, removal and archive reproducibility.
+
+Logout/login validation subsequently passed: the helper started automatically
+at 21:09:37 CST on 2026-11-06, restored all four portal bindings and the saved
+Circle → Emoji Selector assignment, and reported no errors. The user confirmed
+all four buttons worked as before. The touchscreen calibration matrix and output
+assignment remained identical to the saved baseline.
+GNOME remains awaiting physical validation. Hold bindings and worn-switch debounce
+are outside this first version. See [tablet-button guide](tablet-buttons.md).
+The existing `v0.0.1` tag and release archives are unchanged; no release is published.

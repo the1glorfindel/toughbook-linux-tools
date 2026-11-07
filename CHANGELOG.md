@@ -15,3 +15,11 @@
 
 GNOME physical validation and clean-install validation remain pending. This is a
 early release, not a claim that all CF-19 revisions or desktop layouts work.
+
+## Unreleased
+
+- Add experimental CF-19 tablet-button driver and per-user GTK4 settings/helper
+  using the Global Shortcuts portal; customizable actions and Wayland adapters.
+- Add DKMS setup/removal documentation and simulated tests. Target kernel build
+  and all physical button/rotation/session acceptance checks remain required.
+- Preserve version 0.0.1 and existing release tag.

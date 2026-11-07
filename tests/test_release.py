@@ -105,6 +105,14 @@ class ReleaseTests(unittest.TestCase):
             with tarfile.open(first) as archive:
                 members=archive.getmembers()
                 self.assertTrue(any(m.name.endswith('/LICENSE') for m in members))
+                names = {m.name.split('/',1)[1] for m in members}
+                self.assertTrue({'toughbook-buttons.py', 'driver/COPYING',
+                    'driver/panasonic-hbtn.c', 'driver/hbtn-decode.h',
+                    'driver/test-hbtn-decode.c', 'driver/Makefile', 'driver/dkms.conf',
+                    'driver/70-panasonic-hbtn.rules', 'driver/install.sh',
+                    'driver/uninstall.sh', 'data/org.toughbook.Buttons.desktop.in',
+                    'data/org.toughbook.Buttons-autostart.desktop',
+                    'data/toughbook-buttons.service.in'} <= names)
                 for member in members:
                     self.assertNotIn('__pycache__',member.name)
                     self.assertFalse(member.name.endswith(('.alsa-state','.json','.txt')))
@@ -115,11 +123,11 @@ class ReleaseTests(unittest.TestCase):
                 extract=folder/'extracted with spaces'
                 archive.extractall(extract,filter='data')
             release=next(extract.iterdir())
-            for name in ['calibrate-screen.py','fix-audio.py']:
+            for name in ['calibrate-screen.py','fix-audio.py','toughbook-buttons.py']:
                 result=subprocess.run(['python3',str(release/name),'--help'],cwd=folder,
                                       capture_output=True,text=True,timeout=10)
                 self.assertEqual(result.returncode,0,result.stderr)
-                self.assertIn('--restore',result.stdout)
+                self.assertIn('--uninstall' if name == 'toughbook-buttons.py' else '--restore',result.stdout)
 
 
 if __name__=='__main__':

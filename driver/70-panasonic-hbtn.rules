@@ -1,0 +1,4 @@
+# Match input name and ACPI ancestry in separate rules: udev parent matches
+# in a single rule would otherwise have to resolve to the same parent.
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="Panasonic CF-19 Tablet Buttons", ENV{.TOUGHBOOK_BUTTONS}="1"
+SUBSYSTEM=="input", KERNEL=="event*", ENV{.TOUGHBOOK_BUTTONS}=="1", KERNELS=="MAT001F:*", ENV{ID_INPUT_KEYBOARD}="1", TAG+="uaccess"

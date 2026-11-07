@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Toughbook Buttons Helper
+Exec=systemctl --user start toughbook-buttons.service
+NoDisplay=true
