@@ -71,6 +71,22 @@ requires another affirmative listening result. Ordinary failure/cancellation
 restores configuration, routing, and hardware mixer state. Saved files take
 effect again on future logins, and normal volume/mute controls remain available.
 
+## Run the repair
+
+Install Fedora's playback and mixer tools, unplug wired headphones, and run the
+status check before starting the interactive repair:
+
+```sh
+sudo dnf install python3 pipewire-utils pulseaudio-utils alsa-utils wireplumber
+python3 fix-audio.py --status
+python3 fix-audio.py
+```
+
+Listen for both left/right test samples before answering each confirmation.
+If either test is inaudible, answer no so the script can restore its snapshot.
+The successful run restarts the user's WirePlumber service and selects the
+internal speaker as the default output; other streams may pause briefly.
+
 ## Restore, updates, and limits
 
 Every attempt retains a private JSON backup and adjacent `.alsa-state` file.
@@ -93,6 +109,39 @@ them, but this release neither performs pin retasking nor builds a module.
 Headphone insertion/removal, suspend/resume, and persistence after a full reboot
 remain acceptance checks for each machine. Speaker confirmation alone does not
 prove those scenarios. Other CF-19 revisions and codecs may need different fixes.
+
+## Troubleshooting
+
+- **No matching card appears:** run `python3 fix-audio.py --status` and confirm
+  Fedora detects the CF-19 ALC269VC codec. The tool deliberately rejects other
+  codecs. Check that PipeWire/WirePlumber is running and install the README
+  dependencies; do not guess a card number or edit system profile files.
+- **The analog output is missing:** open the desktop Sound settings and select
+  **Analog Stereo** for the internal card, then rerun `--status`. The script
+  cannot test a route that PipeWire has not exposed.
+- **First playback is still silent:** answer no to the listening prompt. The
+  installation is abandoned and captured state is restored. Unplug headphones,
+  check hardware/firmware mute settings, and confirm the internal speaker works
+  outside this tool before retrying. This workaround does not repair a damaged
+  speaker or identify board-level wiring.
+- **WirePlumber fails to restart or the sink does not return:** inspect
+  `journalctl --user -u wireplumber -b`. The script rolls back ordinary failed
+  attempts; if recovery reports an issue, retain the printed backup and use
+  `python3 fix-audio.py --restore BACKUP` after the service is healthy.
+- **The profile files changed or an upstream update is reported:** the script
+  recognizes only the Fedora speaker-path format it knows how to transform. It
+  stops before rewriting unexpected files. Review the installed upstream
+  profile/package update, then rerun the tool to regenerate the private copies;
+  do not edit `/usr/share` files to bypass the check.
+- **Headphones mute the internal speaker again:** auto-mute and jack-routing
+  behavior is not established for every machine. Test with headphones unplugged
+  and consult the audio guide's acceptance limits; this release does not claim
+  universal headset switching behavior.
+- **Restore says the mixer backup is missing:** keep the JSON backup beside its
+  matching `BACKUP.alsa-state` file, and restore as the original user with the
+  same `XDG_CONFIG_HOME`. A restore error may mean configuration files were
+  restored but audio routing or mixer state still needs attention; read the full
+  error and WirePlumber journal before retrying.
 
 ## Sources
 

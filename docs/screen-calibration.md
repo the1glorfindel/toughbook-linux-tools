@@ -41,6 +41,23 @@ before fullscreen had settled, and placed translations in the wrong matrix
 column. These were tool bugs, not causes of the laptop's original touch offset.
 The released implementation explicitly checks geometry and matrix format.
 
+## Run calibration
+
+On Fedora KDE install the tools used for measurement and display discovery:
+
+```sh
+sudo dnf install python3 python3-tkinter python3-dbus xorg-x11-server-Xwayland systemd-udev libkscreen
+python3 calibrate-screen.py --status
+python3 calibrate-screen.py
+```
+
+Use only the internal display, at 100% scale and normal landscape orientation.
+On GNOME, install the same base packages without `libkscreen`; run from the
+logged-in desktop session. Enter saves a candidate and prints the exact
+`--apply BACKUP` command. Only that explicit apply step uses sudo. Log out/in,
+then run the printed `--verify BACKUP` command. See the GNOME backend section
+below before using its experimental workflow.
+
 ## KDE Wayland backend
 
 Display discovery uses `kscreen-doctor -j`. Device identity comes from udev;
@@ -94,6 +111,34 @@ For v1, keep one internal display active, at 100% scale in normal landscape.
 Rotation, fractional scaling, and multiple active monitors need separate validation.
 Do not assume a GNOME system rule replaces a previously saved KWin user matrix
 when switching desktop sessions; calibrate/restore using the appropriate backend.
+
+## Troubleshooting
+
+- **No eligible finger device appears:** run `python3 calibrate-screen.py --status`.
+  Confirm the Wacom `056a:0093` finger interface is present; the pen interface is
+  intentionally excluded. Install the dependencies in the README and check that
+  `systemd-udev` can query input devices. Do not substitute another event device.
+- **The tool refuses the display layout:** disconnect/disable external displays,
+  restore normal landscape orientation, and set scale to 100%. Run `--status`
+  again to confirm the internal panel is the only active output.
+- **Targets move, taps are rejected, or the fit looks wrong:** wait until the
+  fullscreen window settles, tap each target deliberately with a finger, and do
+  not resize or rotate during measurement. A passive stylus may work, but the
+  active Wacom pen is not the calibrated device. If the fit still fails, cancel
+  and retry; the residual threshold is not an accuracy guarantee.
+- **KDE preview is inaccurate or apply fails:** Escape or close the preview to
+  restore the previous matrix. Re-run calibration and accept only after checking
+  edges and corners. If the session is interrupted, use the exact backup path
+  printed by the tool with `python3 calibrate-screen.py --restore BACKUP`.
+- **GNOME verification fails:** first complete the apply command printed after
+  measurement, then log out and back in. Keep display layout unchanged and run
+  the printed `--verify BACKUP` command in the new session. A failed verification
+  retains recovery data; use `--restore BACKUP`, then log out/in again. Applying
+  the same candidate in the old session cannot validate the new udev property.
+- **Restore reports an error:** run it as the same desktop user and with the same
+  `XDG_CONFIG_HOME`. On GNOME, a restored rule takes effect after logout/login.
+  Preserve the backup until the live matrix/output or new-session taps are
+  confirmed.
 
 ## Sources
 

@@ -46,7 +46,7 @@ if [[ -d /sys/firmware/efi ]]; then
     sb_state=$(mokutil --sb-state) || { printf 'Cannot determine Secure Boot state; inspect firmware before proceeding.\n' >&2; exit 1; }
     printf '%s\n' "$sb_state"
     if [[ $sb_state == *enabled* ]]; then
-        printf 'Secure Boot enabled: DKMS module signing and MOK enrollment are required; see README.md.\n'
+        printf 'Secure Boot enabled: verify DKMS signing and enroll its MOK certificate before loading; see docs/driver-installation.md.\n'
     fi
 else
     printf 'Legacy boot: EFI Secure Boot is not active.\n'

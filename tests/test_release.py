@@ -112,7 +112,10 @@ class ReleaseTests(unittest.TestCase):
                     'driver/70-panasonic-hbtn.rules', 'driver/install.sh',
                     'driver/uninstall.sh', 'data/org.toughbook.Buttons.desktop.in',
                     'data/org.toughbook.Buttons-autostart.desktop',
-                    'data/toughbook-buttons.service.in'} <= names)
+                    'data/toughbook-buttons.service.in', 'docs/README.md',
+                    'docs/development.md', 'docs/driver-installation.md',
+                    'docs/tablet-buttons.md', 'docs/screen-calibration.md',
+                    'docs/audio-fix.md'} <= names)
                 for member in members:
                     self.assertNotIn('__pycache__',member.name)
                     self.assertFalse(member.name.endswith(('.alsa-state','.json','.txt')))

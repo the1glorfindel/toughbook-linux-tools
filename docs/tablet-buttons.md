@@ -27,18 +27,22 @@ The ordinary Enter key is unaffected. Press-and-hold assignments are deferred.
 
 ## Fedora setup
 
-Install Fedora-packaged dependencies (no pip):
+Install Fedora-packaged dependencies (no pip). This command includes the KDE
+portal and driver build dependencies; follow the separate driver guide for
+Secure Boot and module installation. GNOME uses its portal package instead of
+the KDE backend and remains physically unvalidated.
 
 ```sh
-sudo dnf install python3 python3-gobject gtk4 python3-dbus xdg-desktop-portal
+sudo dnf install python3 python3-gobject gtk4 python3-dbus xdg-desktop-portal xdg-desktop-portal-kde libkscreen make gcc kernel-devel-$(uname -r) dkms mokutil openssl
 ```
 
-For KDE also install `xdg-desktop-portal-kde` and `libkscreen`; for GNOME install
+For GNOME, replace `xdg-desktop-portal-kde` with
 `xdg-desktop-portal-gnome`. The compositor must provide the Global Shortcuts
-portal. Merely installing a package does not establish backend support: inspect
-`--status`, then start the helper and approve its portal dialog. A backend that
-does not expose this interface is reported as unavailable; there is no fallback
-that captures your ordinary keyboard.
+portal. Merely installing a package does not establish backend support: install
+the driver as described in the [driver guide](driver-installation.md), inspect
+`--status`, then install the per-user helper and approve its portal dialog. A
+backend that does not expose this interface is reported as unavailable; there
+is no fallback that captures your ordinary keyboard.
 
 ```sh
 python3 toughbook-buttons.py --status
@@ -121,6 +125,59 @@ service and menu/autostart entries. Preferences are retained; delete
 `$XDG_CONFIG_HOME/toughbook-buttons` manually to discard them. Existing calibration
 and audio settings are separate and retained. Driver removal may require manual
 unload or reboot, as described in its instructions.
+
+## Troubleshooting
+
+- **`--status` says the driver is not detected:** follow the checks in the
+  [driver guide](driver-installation.md). The application cannot install or load
+  the kernel module itself. Confirm the module is loaded and that this Mk6 has a
+  `MAT001F` tablet device.
+- **`--monitor` reports permission denied or shows no events:** run it as your
+  desktop user, not with sudo. Confirm the installed udev rule and the dedicated
+  device name in `python3 toughbook-buttons.py --status`, then reload the rules
+  and refresh only that event device (replace `eventN` with the displayed event):
+
+  ```sh
+  sudo udevadm control --reload-rules
+  sudo udevadm trigger --action=add /sys/class/input/eventN
+  ```
+
+  If access is still denied, log out/in to refresh the session ACL. Do not grant
+  broad access to the `input` group. Unknown ACPI events belong in the
+  driver/kernel diagnostics.
+- **No shortcut approval appears, or the portal is unavailable:** install the
+  portal backend for the current desktop (`xdg-desktop-portal-kde` or
+  `xdg-desktop-portal-gnome`), then log out/in and inspect `--status`. The
+  compositor must expose Global Shortcuts; the app does not fall back to
+  monitoring the ordinary keyboard.
+- **A button is unbound or the portal reports a conflict:** open the app's
+  **Configure global shortcuts…** control and follow the desktop dialog. Clear
+  stale custom keys first, then record each physical button in its named row.
+  Fedora can display the requested triggers as Tools and Launch (5), Launch (6),
+  and Launch (7), rather than F13–F16. Verify the actual trigger descriptions in
+  the app/status; another keyboard generating the same keysym can invoke it too.
+- **The trigger arrives but its action fails:** inspect the app status and
+  `journalctl --user -u toughbook-buttons.service -b`. Check that the selected
+  application or executable still exists. A plain command is parsed into argv;
+  pipes and redirection work only when the assignment explicitly uses **Shell
+  command**. A failed action does not clear other assignments.
+- **Keyboard, launcher, or lock is unavailable:** enable a desktop virtual
+  keyboard provider in KDE, or focus an editable field for GNOME's accessibility
+  keyboard. Confirm the session is unlocked and the current desktop exposes the
+  action interface. The helper reports unavailable methods; it does not use
+  X11 automation or unrestricted GNOME Shell evaluation.
+- **Rotation fails or touch is inaccurate:** use one active internal display and
+  inspect desktop display settings. The action snapshots the current layout and
+  attempts rollback on failure; if recovery also fails, restore the previous
+  orientation in Display Settings and inspect helper logs. Do not recalibrate
+  while rotated. KDE Mk6 touch was verified in all orientations; GNOME rotation
+  remains physically unvalidated.
+- **Buttons stop working after login:** check
+  `systemctl --user status toughbook-buttons.service` and its journal. Re-run
+  `python3 toughbook-buttons.py --install` from the desktop user, approve the
+  portal request, and verify saved assignments in the app. Preferences are in
+  `$XDG_CONFIG_HOME/toughbook-buttons/settings.json` and survive integration
+  removal.
 
 ## Acceptance status
 
