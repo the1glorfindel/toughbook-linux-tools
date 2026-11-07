@@ -1,5 +1,11 @@
 # Documentation
 
+The unified per-user launcher is installed with `python3 toughbook-tools.py --install`
+and removed with `python3 toughbook-tools.py --uninstall`. It packages this documentation,
+source, scripts, and the optional driver together; it does not start the
+optional button helper. See the project README for launcher status and page
+selection options.
+
 ## Issue and feature guides
 
 - [Finger-touch calibration](screen-calibration.md): why finger coordinates

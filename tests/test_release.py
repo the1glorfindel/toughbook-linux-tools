@@ -106,7 +106,7 @@ class ReleaseTests(unittest.TestCase):
                 members=archive.getmembers()
                 self.assertTrue(any(m.name.endswith('/LICENSE') for m in members))
                 names = {m.name.split('/',1)[1] for m in members}
-                self.assertTrue({'toughbook-buttons.py', 'driver/COPYING',
+                self.assertTrue({'toughbook-buttons.py', 'toughbook-tools.py', 'toughbook/integration.py', 'data/org.toughbook.Tools.desktop.in', 'data/org.toughbook.Tools.svg', 'driver/COPYING',
                     'driver/panasonic-hbtn.c', 'driver/hbtn-decode.h',
                     'driver/test-hbtn-decode.c', 'driver/Makefile', 'driver/dkms.conf',
                     'driver/70-panasonic-hbtn.rules', 'driver/install.sh',
@@ -126,11 +126,76 @@ class ReleaseTests(unittest.TestCase):
                 extract=folder/'extracted with spaces'
                 archive.extractall(extract,filter='data')
             release=next(extract.iterdir())
-            for name in ['calibrate-screen.py','fix-audio.py','toughbook-buttons.py']:
+            for name in ['calibrate-screen.py','fix-audio.py','toughbook-buttons.py','toughbook-tools.py']:
                 result=subprocess.run(['python3',str(release/name),'--help'],cwd=folder,
                                       capture_output=True,text=True,timeout=10)
                 self.assertEqual(result.returncode,0,result.stderr)
-                self.assertIn('--uninstall' if name == 'toughbook-buttons.py' else '--restore',result.stdout)
+                expected = '--uninstall' if name in ('toughbook-buttons.py', 'toughbook-tools.py') else '--restore'
+                self.assertIn(expected,result.stdout)
+
+
+class IntegrationTests(unittest.TestCase):
+    def test_install_copies_full_project_and_migrates_visible_buttons_launcher(self):
+        from toughbook import integration
+        with tempfile.TemporaryDirectory(prefix='toughbook integration ') as folder, \
+             patch.dict(os.environ, {'XDG_CONFIG_HOME': folder + '/config', 'XDG_DATA_HOME': folder + '/data'}), \
+             patch('toughbook.integration.subprocess.run') as run:
+            target, launcher, old = integration.paths()
+            old.parent.mkdir(parents=True)
+            old.write_text('legacy launcher')
+            integration.install_app()
+            self.assertTrue((target/'driver/install.sh').is_file())
+            self.assertTrue((target/'docs/tablet-buttons.md').is_file())
+            self.assertIn('Name=Toughbook Tools', launcher.read_text())
+            self.assertIn('NoDisplay=true', old.read_text())
+            self.assertIn('Name=Toughbook Buttons', old.read_text())
+            run.assert_called_once()
+
+    def test_uninstall_keeps_settings_helper_and_unrelated_menu_entries(self):
+        from toughbook import integration
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {'XDG_CONFIG_HOME': folder + '/config', 'XDG_DATA_HOME': folder + '/data'}), patch('toughbook.integration.subprocess.run'):
+            target, launcher, _ = integration.paths()
+            target.mkdir(parents=True)
+            launcher.parent.mkdir(parents=True)
+            launcher.write_text('ours')
+            other = launcher.parent/'other.desktop'
+            other.write_text('keep')
+            settings = Path(folder)/'config/toughbook-buttons/settings.json'
+            settings.parent.mkdir(parents=True)
+            settings.write_text('{}')
+            integration.uninstall_app()
+            self.assertFalse(target.exists())
+            self.assertFalse(launcher.exists())
+            self.assertTrue(other.exists())
+            self.assertTrue(settings.exists())
+
+    def test_app_upgrade_migrates_inactive_helper_without_starting_it(self):
+        from toughbook import integration
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {'XDG_CONFIG_HOME': folder + '/config', 'XDG_DATA_HOME': folder + '/data'}), patch('toughbook.integration.subprocess.run') as run:
+            run.return_value.returncode = 3
+            service = Path(folder)/'config/systemd/user/toughbook-buttons.service'
+            service.parent.mkdir(parents=True)
+            service.write_text('old unit')
+            integration.install_app()
+            self.assertIn('toughbook-tools/toughbook-buttons.py', service.read_text())
+            calls = [call.args[0] for call in run.call_args_list]
+            self.assertNotIn(['systemctl', '--user', 'start', 'toughbook-buttons.service'], calls)
+
+    def test_app_upgrade_restarts_failed_helper_after_restoring_portal_identity(self):
+        from toughbook import integration
+        def result(command, **kwargs):
+            return Mock(returncode=0 if command[2:4] == ['is-failed', '--quiet'] else 3)
+        with tempfile.TemporaryDirectory() as folder, \
+             patch.dict(os.environ, {'XDG_CONFIG_HOME': folder + '/config', 'XDG_DATA_HOME': folder + '/data'}), \
+             patch('toughbook.integration.subprocess.run', side_effect=result) as run:
+            service = Path(folder)/'config/systemd/user/toughbook-buttons.service'
+            service.parent.mkdir(parents=True)
+            service.write_text('old unit')
+            integration.install_app()
+            _, _, hidden = integration.paths()
+            self.assertIn('NoDisplay=true', hidden.read_text())
+            self.assertIn(['systemctl', '--user', 'start', 'toughbook-buttons.service'],
+                          [call.args[0] for call in run.call_args_list])
 
 
 if __name__=='__main__':

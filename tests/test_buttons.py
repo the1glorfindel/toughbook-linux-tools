@@ -64,6 +64,21 @@ class ButtonsTests(unittest.TestCase):
             portal.activated('/session/ours','key',4,{})
             self.assertEqual(execute.call_count,2)
 
+    def test_identification_pause_records_button_without_launching(self):
+        portal = object.__new__(b.Portal)
+        portal.session = '/session/ours'
+        portal.active = set()
+        portal.paused = True
+        with patch.object(b, 'record_status') as status, patch.object(b, 'execute') as execute, \
+             patch.object(b, 'load_settings', return_value=b.defaults()):
+            portal.activated('/session/ours', 'circle', 1, {})
+            self.assertEqual(status.call_args.kwargs['last_button'], 'Circle')
+            execute.assert_not_called()
+            portal.deactivated('/session/ours', 'circle', 2, {})
+            portal.paused = False
+            portal.activated('/session/ours', 'circle', 3, {})
+            execute.assert_called_once()
+
     def test_conflicts_report_actual_shortcuts(self):
         portal = object.__new__(b.Portal)
         portal.session='/ours'
@@ -230,13 +245,17 @@ class ButtonsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='cf19 app ') as folder, patch.dict(os.environ, {'XDG_CONFIG_HOME':folder+'/config','XDG_DATA_HOME':folder+'/data'}), patch.object(b.subprocess, 'run') as run:
             b.integration(True)
             target, menu, autostart = b.integration_paths()
-            self.assertTrue((target/'toughbook-buttons.py').exists())
+            from toughbook.integration import paths as app_paths
+            app_target, app_menu, _ = app_paths()
+            self.assertTrue((app_target/'toughbook-buttons.py').exists())
+            self.assertIn('NoDisplay=true', menu.read_text())
+            self.assertTrue(app_menu.exists())
             self.assertIn('--daemon', (Path(folder)/'config/systemd/user/toughbook-buttons.service').read_text())
             self.assertIn('toughbook-buttons.service', autostart.read_text())
             run.assert_any_call(['systemctl','--user','restart','toughbook-buttons.service'],check=True)
             # Reinstalling from an installed copy must not copy a file onto itself.
             b.integration(True)
-            self.assertTrue(menu.exists())
+            self.assertTrue(app_menu.exists())
 
     def test_launcher_escaping(self):
         self.assertEqual(b.exec_quote('/tmp/a $b% c', systemd=True), '\"/tmp/a $$b%% c\"')

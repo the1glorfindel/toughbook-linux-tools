@@ -143,6 +143,9 @@ class Portal:
         self.api = dbus.Interface(self.obj, 'org.freedesktop.portal.GlobalShortcuts')
         self.session = None
         self.active = set()
+        self.paused = False
+        self.pause_timer = None
+        self.pause_match = None
         self.pending = []
         self.session_matches = []
         self.shortcuts = {}
@@ -272,6 +275,8 @@ class Portal:
         self.active.add(key)
         try:
             record_status(last_button=BUTTONS[key][0], error='')
+            if getattr(self, 'paused', False):
+                return
             execute(load_settings()[key])
         except Exception as exc:
             record_status(error=str(exc))
@@ -289,6 +294,32 @@ class Portal:
                 self.dbus.Dictionary({}, signature='sv'), timeout=10)
         except Exception as exc:
             raise ToolError(f'Cannot open portal shortcut configuration: {exc}. Use desktop shortcut settings or update the portal backend.') from exc
+
+    def pause_actions(self, sender=None):
+        from gi.repository import GLib
+        self.resume_actions()
+        self.paused = True
+        self.pause_timer = GLib.timeout_add_seconds(60, self.resume_actions)
+        if sender:
+            self.pause_match = self.bus.add_signal_receiver(self._pause_owner_changed,
+                signal_name='NameOwnerChanged', dbus_interface='org.freedesktop.DBus',
+                bus_name='org.freedesktop.DBus', arg0=sender)
+        record_status(error='Button actions paused for identification (up to 60 seconds).')
+
+    def _pause_owner_changed(self, name, previous, owner):
+        if not owner:
+            self.resume_actions()
+
+    def resume_actions(self):
+        from gi.repository import GLib
+        if getattr(self, 'pause_timer', None) is not None:
+            GLib.source_remove(self.pause_timer)
+            self.pause_timer = None
+        if getattr(self, 'pause_match', None) is not None:
+            self.pause_match.remove()
+            self.pause_match = None
+        self.paused = False
+        return False
 
     def close(self):
         self.clear_requests()
@@ -317,6 +348,12 @@ def daemon():
             @service.method(CONTROL_IFACE, in_signature='', out_signature='')
             def Configure(self):
                 portal.configure()
+            @service.method(CONTROL_IFACE, in_signature='', out_signature='', sender_keyword='sender')
+            def PauseActions(self, sender=None):
+                portal.pause_actions(sender)
+            @service.method(CONTROL_IFACE, in_signature='', out_signature='')
+            def ResumeActions(self):
+                portal.resume_actions()
         control_name = service.BusName(CONTROL_IFACE, bus=portal.bus, do_not_queue=True)
         control = Control(control_name, CONTROL_PATH)
         loop = GLib.MainLoop()
@@ -397,28 +434,22 @@ def integration(install):
         subprocess.run(['systemctl', '--user', 'daemon-reload'], capture_output=True)
         print('Removed app and session integration. Settings retained at', settings_path())
         return
-    root = Path(__file__).resolve().parents[1]
-    target.mkdir(parents=True, exist_ok=True)
-    # Stage before replacement: rerunning the installed copy is supported.
-    import tempfile
-    with tempfile.TemporaryDirectory() as temporary:
-        stage = Path(temporary)
-        shutil.copytree(root / 'toughbook', stage / 'toughbook', ignore=shutil.ignore_patterns('__pycache__'))
-        shutil.copy2(root / 'toughbook-buttons.py', stage / 'toughbook-buttons.py')
-        shutil.copytree(root / 'data', stage / 'data')
-        shutil.copytree(stage, target, dirs_exist_ok=True)
-    script = target / 'toughbook-buttons.py'
-    command = '/usr/bin/python3 ' + exec_quote(script)
-    service_command = '/usr/bin/python3 ' + exec_quote(script, systemd=True)
-    menu.parent.mkdir(parents=True, exist_ok=True)
-    menu.write_text((target/'data/org.toughbook.Buttons.desktop.in').read_text().replace('@PYTHON_EXEC@', command))
+    from .integration import install_app, paths as app_paths
+    app_target, _, _ = app_paths()
+    install_app()
+    script = app_target / 'toughbook-buttons.py'
     autostart.parent.mkdir(parents=True, exist_ok=True)
-    autostart.write_text((target/'data/org.toughbook.Buttons-autostart.desktop').read_text())
+    autostart.write_text((app_target/'data/org.toughbook.Buttons-autostart.desktop').read_text())
     service.parent.mkdir(parents=True, exist_ok=True)
-    service.write_text((target/'data/toughbook-buttons.service.in').read_text().replace('@SERVICE_EXEC@', service_command))
+    service_command = '/usr/bin/python3 ' + exec_quote(script, systemd=True)
+    service.write_text((app_target/'data/toughbook-buttons.service.in').read_text().replace('@SERVICE_EXEC@', service_command))
+    # Keep the hidden desktop entry: the Global Shortcuts portal looks it up
+    # when registering the helper's stable application ID.
+    if target.exists() and target != app_target:
+        shutil.rmtree(target)
     subprocess.run(['systemctl', '--user', 'daemon-reload'], check=True)
     subprocess.run(['systemctl', '--user', 'restart', 'toughbook-buttons.service'], check=True)
-    print('Installed Toughbook Buttons in the application menu and login autostart.')
+    print('Installed the Toughbook Tools helper and login autostart.')
 
 
 def status():
@@ -428,114 +459,8 @@ def status():
 
 
 def gui():
-    import gi
-    gi.require_version('Gtk', '4.0')
-    from gi.repository import Gtk, GLib, Gio
-    app = Gtk.Application(application_id=APP_ID)
-    def activate(application):
-        window = Gtk.ApplicationWindow(application=application, title='Toughbook Buttons', default_width=660)
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12, margin_top=18,
-                      margin_bottom=18, margin_start=18, margin_end=18)
-        scroll = Gtk.ScrolledWindow()
-        scroll.set_child(box)
-        window.set_default_size(660, 760)
-        window.set_child(scroll)
-        box.append(Gtk.Label(label='CF-19 tablet edge:  [ Keyboard ]  [ ○ ]  [ ↻ ]  [ Key ]', wrap=True))
-        box.append(Gtk.Label(label='Single press assignments · brightness controls stay with the existing driver', wrap=True))
-        initial_error = ''
-        try:
-            current = load_settings()
-        except (ToolError, ValueError, OSError) as exc:
-            current = defaults()
-            initial_error = f'Could not load settings: {exc}. Review defaults below and Save to replace the invalid file.'
-        rows = {}
-        apps = sorted([a for a in Gio.AppInfo.get_all() if a.should_show() and a.get_id()], key=lambda a: a.get_name().casefold())
-        choices = [('builtin', a, a.title()) for a in BUILTINS] + [('command', '', 'Executable with arguments'), ('shell', '', 'Explicit shell command')] + [('application', a.get_id(), a.get_name()) for a in apps]
-        installed_ids = {choice[1] for choice in choices if choice[0] == 'application'}
-        for assignment in current.values():
-            if assignment['type'] == 'application' and assignment['value'] not in installed_ids:
-                choices.append(('application', assignment['value'], 'Missing application: ' + assignment['value']))
-                installed_ids.add(assignment['value'])
-        for key, row in BUTTONS.items():
-            box.append(Gtk.Label(label=f'{row[0]} ({row[2]}) — Windows: {row[1]}', xalign=0))
-            dropdown = Gtk.DropDown.new_from_strings([c[2] for c in choices])
-            assigned = current[key]
-            dropdown.set_selected(next((i for i,c in enumerate(choices) if c[:2] == (assigned['type'], assigned['value']) or c[0] == assigned['type'] and c[0] in ('command','shell')), 0))
-            entry = Gtk.Entry(text=assigned['value'] if assigned['type'] in ('command','shell') else '', placeholder_text='Executable and arguments; quote arguments containing spaces')
-            box.append(dropdown)
-            box.append(entry)
-            def selected(d, p, e=entry):
-                e.set_sensitive(choices[d.get_selected()][0] in ('command','shell'))
-            dropdown.connect('notify::selected', selected)
-            selected(dropdown, None)
-            rows[key] = dropdown, entry
-        message = Gtk.Label(label=initial_error, wrap=True, selectable=True, xalign=0)
-        live = Gtk.Label(wrap=True, selectable=True, xalign=0)
-        def save(_):
-            try:
-                data = {}
-                for key, (drop, entry) in rows.items():
-                    kind, value, _ = choices[drop.get_selected()]
-                    data[key] = {'type': kind, 'value': entry.get_text() if kind in ('command','shell') else value}
-                save_json(settings_path(), validate(data))
-                message.set_label('Saved. The helper reads assignments on each press.')
-            except Exception as exc:
-                message.set_label(str(exc))
-        button = Gtk.Button(label='Save assignments')
-        button.connect('clicked', save)
-        box.append(button)
-        def reset(_):
-            for key, (drop, entry) in rows.items():
-                drop.set_selected(next(i for i,c in enumerate(choices) if c[:2] == ('builtin', BUTTONS[key][3])))
-                entry.set_text('')
-            save(None)
-        button = Gtk.Button(label='Reset assignments to defaults')
-        button.connect('clicked', reset)
-        box.append(button)
-        def start(_):
-            try:
-                integration(True)
-                message.set_label('Helper started. Approve the portal shortcuts dialog.')
-            except Exception as exc:
-                message.set_label(str(exc))
-        button = Gtk.Button(label='Install / start login helper')
-        button.connect('clicked', start)
-        box.append(button)
-        def configure(_):
-            try:
-                import dbus
-                proxy = dbus.SessionBus().get_object(CONTROL_IFACE, CONTROL_PATH)
-                dbus.Interface(proxy, CONTROL_IFACE).Configure(timeout=15)
-                message.set_label('Use the desktop dialog to record each physical button; actual shortcuts appear below.')
-            except Exception as exc:
-                message.set_label(f'Cannot configure shortcuts: {exc}. Install/start the helper first.')
-        button = Gtk.Button(label='Configure global shortcuts…')
-        button.connect('clicked', configure)
-        box.append(button)
-        box.append(message)
-        box.append(live)
-        def refresh():
-            try:
-                info = status()
-                session = info['session']
-                bindings = session.get('shortcuts', {})
-                lines = ['Driver: ' + ('Ready' if info['driver_devices'] else 'Not detected; see driver installation instructions'),
-                         info['portal'], 'Session helper: ' + ('running' if session.get('pid') else 'stopped'),
-                         'Shortcuts: ' + ', '.join(f'{row[0]}: {bindings.get(key, "unbound")}' for key,row in BUTTONS.items())]
-                if session.get('last_button'):
-                    lines.append('Last button: ' + session['last_button'])
-                if session.get('error'):
-                    lines.append('Status: ' + session['error'])
-                live.set_label('\n'.join(lines))
-            except Exception as exc:
-                live.set_label(str(exc))
-            return True
-        refresh()
-        timer = GLib.timeout_add_seconds(2, refresh)
-        window.connect('close-request', lambda *_: (GLib.source_remove(timer), False)[1])
-        window.present()
-    app.connect('activate', activate)
-    return app.run([])
+    from .gui import run_gui
+    return run_gui('buttons')
 
 
 def main(argv=None):

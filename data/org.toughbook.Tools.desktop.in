@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Toughbook Tools
+Comment=Configure CF-19 screen, audio, and tablet button tools
+Icon=org.toughbook.Tools
+Exec=@PYTHON_EXEC@
+Terminal=false
+Categories=Settings;HardwareSettings;

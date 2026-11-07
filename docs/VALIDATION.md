@@ -118,3 +118,17 @@ assignment remained identical to the saved baseline.
 GNOME remains awaiting physical validation. Hold bindings and worn-switch debounce
 are outside this first version. See [tablet-button guide](tablet-buttons.md).
 Version 0.1.0 includes these changes. The existing `v0.0.1` tag and archives remain unchanged.
+
+## Unified Toughbook Tools GUI (unreleased)
+
+The Qt6 application combines KDE touch calibration, graphical audio confirmations,
+button assignments, driver guidance, recovery controls, and expandable command
+output. Automated tests cover target sampling, GUI assignment persistence,
+audio prompts and worker completion, the per-user installation archive, and
+portal identity preservation. The desktop file validates and the menu entry is
+discoverable under the name **Toughbook Tools** on the reference KDE session.
+The migrated button helper restarted with its existing four portal bindings.
+
+Physical use of the new Qt calibration targets, audible speaker test, button
+identification pause, and privileged driver controls remains to be checked by
+the user. These GUI workflows are not yet hardware-validated.

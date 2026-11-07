@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Add the Qt6 Toughbook Tools application for KDE, combining guided finger
+  calibration, speaker repair, tablet-button assignments, and driver setup.
+- Add a per-user application menu entry, troubleshooting output, saved-backup
+  recovery controls, and migration from the standalone Buttons menu entry.
+- Preserve the button portal identity through a hidden desktop entry so
+  existing shortcut approvals survive the migration.
+
 ## 0.1.0 — 2026-11-06
 
 - Add the CF-19 Mk6 MAT001F tablet-button driver, DKMS integration and narrowly

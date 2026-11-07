@@ -1,6 +1,6 @@
-# Toughbook Buttons (experimental)
+# Tablet buttons: driver and assignments
 
-This feature is implemented for CF-19 tablet buttons on KDE and GNOME Wayland.
+The Toughbook Tools application configures CF-19 tablet buttons on KDE and GNOME Wayland.
 **Hardware-tested on Fedora 44 KDE Wayland, CF-19 Mk6 (`CF19-6`).**
 The four defaults, custom app launching, touch through all four orientations,
 and suspend/resume were confirmed by the user. Calibration coefficients were
@@ -33,7 +33,7 @@ Secure Boot and module installation. GNOME uses its portal package instead of
 the KDE backend and remains physically unvalidated.
 
 ```sh
-sudo dnf install python3 python3-gobject gtk4 python3-dbus xdg-desktop-portal xdg-desktop-portal-kde libkscreen make gcc kernel-devel-$(uname -r) dkms mokutil openssl
+sudo dnf install python3 python3-pyside6 qt6-qtwayland python3-gobject python3-dbus xdg-desktop-portal xdg-desktop-portal-kde libkscreen make gcc kernel-devel-$(uname -r) dkms mokutil openssl
 ```
 
 For GNOME, replace `xdg-desktop-portal-kde` with
@@ -46,14 +46,14 @@ is no fallback that captures your ordinary keyboard.
 
 ```sh
 python3 toughbook-buttons.py --status
-python3 toughbook-buttons.py --install
-python3 toughbook-buttons.py
+python3 toughbook-tools.py --install
+python3 toughbook-tools.py --page buttons
 ```
 
-Find **Toughbook Buttons** in the application menu after installation. The private
-installed copy lives under `$XDG_DATA_HOME/toughbook-buttons`. Menu and login
-entries are per-user. The helper keeps its portal connection alive through a
-user service started by the desktop autostart entry. Inspect logs with:
+Find **Toughbook Tools** in the application menu after installation. The private
+installed copy lives under `$XDG_DATA_HOME/toughbook-tools`. Enable the button
+helper from its page; it keeps its portal connection alive through a user service
+started by the desktop autostart entry. Inspect logs with:
 
 ```sh
 journalctl --user -u toughbook-buttons.service -b
@@ -120,8 +120,9 @@ python3 toughbook-buttons.py --uninstall
 sudo bash driver/uninstall.sh
 ```
 
-The first stops the helper and removes only this application's installed files,
-service and menu/autostart entries. Preferences are retained; delete
+The first stops the helper and removes its service/autostart entries. To remove
+the unified application and its menu entry too, run
+`python3 toughbook-tools.py --uninstall`. Preferences are retained; delete
 `$XDG_CONFIG_HOME/toughbook-buttons` manually to discard them. Existing calibration
 and audio settings are separate and retained. Driver removal may require manual
 unload or reboot, as described in its instructions.

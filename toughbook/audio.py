@@ -104,7 +104,7 @@ def restore_routing(data, sink):
     run('pactl', 'set-default-sink', data['default_sink'])
 
 
-def restore_backup(path, remove_marker=True):
+def restore_backup(path, remove_marker=True, log_fn=None):
     data = load_json(path, 'audio')
     config = config_dir()
     if data['config'] != str(config):
@@ -133,7 +133,11 @@ def restore_backup(path, remove_marker=True):
     marker = state_dir() / 'audio-installed.json'
     if remove_marker and marker.exists() and load_json(marker).get('baseline') == str(Path(path).resolve()):
         marker.unlink()
-    print('Previous audio configuration and mixer state restored.')
+    message = 'Previous audio configuration and mixer state restored.'
+    if log_fn:
+        log_fn(message)
+    else:
+        print(message)
 
 
 def playback(sink):
@@ -148,7 +152,27 @@ def set_route(sink, port):
     run('pactl', 'set-sink-volume', sink['name'], '60%')
 
 
-def repair(device):
+def repair(device, confirm_fn=None, start_fn=None, cancel_event=None, log_fn=None):
+    """Run the reversible repair, optionally using GUI prompts and cancellation.
+
+    The default callbacks retain the original interactive CLI behavior. GUI
+    callers can supply a confirmation callback that marshals prompts to its
+    main thread, plus a threading.Event to request rollback.
+    """
+    confirm_fn = confirm_fn or confirm
+    gui_start = start_fn is not None
+    start_fn = start_fn or input
+
+    def log(message):
+        if log_fn:
+            log_fn(message)
+        else:
+            print(message, flush=True)
+
+    def check_cancelled():
+        if cancel_event is not None and cancel_event.is_set():
+            raise ToolError('Audio repair cancelled; restoring the previous configuration.')
+
     config = config_dir()
     files = build_files(config, device['name'])  # Validate package formats before changing anything.
     sink = sink_for(device)
@@ -170,42 +194,54 @@ def repair(device):
             'default_sink': run('pactl', 'get-default-sink').stdout.strip(), 'status': 'testing'}
     save_json(path, data)
     accepted = False
-    print(f'Backup: {path}', flush=True)
+    log(f'Backup: {path}')
     try:
-        input('Unplug wired headphones, then press Enter to test the internal speaker. ')
+        check_cancelled()
+        start_message = 'Unplug wired headphones, then press Enter to test the internal speaker. '
+        if gui_start:
+            accepted_start = start_fn('Unplug wired headphones, then continue to test the internal speaker?')
+        else:
+            start_fn(start_message)
+            accepted_start = True
+        if not accepted_start:
+            raise ToolError('Audio repair cancelled; restoring the previous configuration.')
+        check_cancelled()
         ports = {p['name'] for p in sink['ports']}
         port = 'cf19-output-speaker' if 'cf19-output-speaker' in ports else 'analog-output-speaker'
         set_route(sink, port)
         run('amixer', '-c', str(device['index']), 'sset', 'Auto-Mute Mode', 'Disabled')
         run('amixer', '-c', str(device['index']), 'sset', 'Headphone', '80%', 'unmute')
         playback(sink)
-        if not confirm('Did you hear the INTERNAL speaker?'):
-            print('No fix saved. Test wired headphones next to help isolate hardware/routing.')
+        if not confirm_fn('Did you hear the INTERNAL speaker?'):
+            log('No fix saved. Test wired headphones next to help isolate hardware/routing.')
             return 2
+        check_cancelled()
         for target, content in files.items():
             target.parent.mkdir(parents=True, exist_ok=True)
             temporary = target.with_suffix(target.suffix + '.tmp')
             temporary.write_text(content)
             temporary.replace(target)
         _, sink = restart(device)
+        check_cancelled()
         set_route(sink, 'cf19-output-speaker')
         run('pactl', 'set-default-sink', sink['name'])
         playback(sink)
-        if not confirm('Does the internal speaker STILL work after the audio service restart?'):
+        if not confirm_fn('Does the internal speaker STILL work after the audio service restart?'):
             return 2
+        check_cancelled()
         data['status'] = 'accepted'
         save_json(path, data)
         baseline = baseline or path
         save_json(marker, {'kind': 'audio-installation', 'baseline': str(baseline.resolve()),
                            'latest': str(path.resolve())})
         accepted = True
-        print('Speaker fix saved. Test normal volume/mute controls and a logout/login or reboot.')
+        log('Speaker fix saved. Test normal volume/mute controls and a logout/login or reboot.')
         script = Path(__file__).resolve().parent.parent / 'fix-audio.py'
-        print('To uninstall: ' + shlex.join(['python3', str(script), '--restore', str(baseline)]))
+        log('To uninstall: ' + shlex.join(['python3', str(script), '--restore', str(baseline)]))
         return 0
     finally:
         if not accepted:
-            restore_backup(path, remove_marker=False)
+            restore_backup(path, remove_marker=False, log_fn=log_fn)
 
 
 def main(argv=None):

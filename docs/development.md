@@ -2,7 +2,7 @@
 
 ## Run checks
 
-From the repository root:
+Install the GUI dependencies from the main README first. From the repository root:
 
 ```sh
 python3 -m unittest discover -s tests -v
@@ -35,7 +35,7 @@ python3 -m unittest discover -s tests -p test_release.py -v
 
 The archive is written beside the repository by default, with a SHA-256 file.
 The builder allowlists source and test files, all Markdown under `docs/`, the
-driver sources/license/build files, and the three desktop integration templates.
+driver sources/license/build files, desktop integration templates, and the app icon.
 It omits Git metadata, bytecode, and runtime state, and normalizes timestamps
 and ownership for reproducibility. The release test checks repeatability,
 required content, extracted command-line help, and absence of local home paths.
