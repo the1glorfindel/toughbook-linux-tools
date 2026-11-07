@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-11-07
 
 - Add the Qt6 Toughbook Tools application for KDE, combining guided finger
   calibration, speaker repair, tablet-button assignments, and driver setup.
