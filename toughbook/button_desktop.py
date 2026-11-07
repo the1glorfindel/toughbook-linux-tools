@@ -235,4 +235,3 @@ def perform(action):
         _rotate_kde()
     else:
         _rotate_gnome()
-

@@ -137,7 +137,7 @@ restored all bindings and the saved Emoji Selector assignment, and the user conf
 all buttons worked as before. Calibration remained unchanged. GNOME remains
 simulated and awaiting physical validation. Press-and-hold timing and switch debounce are not claimed;
 the helper ignores repeat activation while held. A worn button can still emit two
-complete physical press/release cycles. No new release or tag update was made.
+complete physical press/release cycles. Version 0.1.0 includes this feature; the existing v0.0.1 tag is preserved.
 
 Interface references: [Global Shortcuts portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.GlobalShortcuts.html),
 [Mutter DisplayConfig](https://gitlab.gnome.org/GNOME/mutter/-/blob/main/data/dbus-interfaces/org.gnome.Mutter.DisplayConfig.xml).

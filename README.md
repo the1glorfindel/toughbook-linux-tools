@@ -1,7 +1,7 @@
 # Toughbook Fedora Tools
 
 Portable scripts for **Panasonic Toughbook CF-19** finger-touch calibration and
-internal-speaker repair on a standard Fedora desktop. Version **0.0.1**, MIT.
+internal-speaker repair on a standard Fedora desktop. Version **0.1.0**. Applications are MIT licensed; the tablet-button module is GPL-2.0-only.
 The optional experimental tablet-button feature adds a kernel module and a
 per-user session helper; see [Toughbook Buttons](docs/tablet-buttons.md).
 

@@ -79,7 +79,7 @@ sensor/codec IDs. Do not mark an item passed solely because its simulation passe
 - Verify the checksum, run tests from the extracted archive, and review its file list.
 - Promote GNOME from experimental only after the physical GNOME checks pass.
 
-## Tablet buttons (unreleased)
+## Tablet buttons (0.1.0)
 
 Hardware validation on Fedora 44 KDE Wayland, CF-19 Mk6 (`CF19-6`), running
 `7.2.15-200.fc44.x86_64`:
@@ -117,4 +117,4 @@ all four buttons worked as before. The touchscreen calibration matrix and output
 assignment remained identical to the saved baseline.
 GNOME remains awaiting physical validation. Hold bindings and worn-switch debounce
 are outside this first version. See [tablet-button guide](tablet-buttons.md).
-The existing `v0.0.1` tag and release archives are unchanged; no release is published.
+Version 0.1.0 includes these changes. The existing `v0.0.1` tag and archives remain unchanged.

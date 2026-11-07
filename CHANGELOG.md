@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.0 — 2026-11-06
+
+- Add the CF-19 Mk6 MAT001F tablet-button driver, DKMS integration and narrowly
+  scoped device access, with separate GPL-2.0 licensing and upstream attribution.
+- Add the per-user GTK4 Toughbook Buttons settings app and Global Shortcuts portal
+  helper, supporting built-in actions, installed apps and custom commands.
+- Verify keyboard toggling, launcher/custom app, four display orientations with
+  accurate touch, locking, suspend/resume and login persistence on Fedora KDE.
+- Verify target-kernel compilation, 72 automated tests and live uninstall/reinstall.
+- Preserve audio and calibration settings. GNOME physical validation remains pending.
+- Retain the existing v0.0.1 tag and archives.
+
 ## 0.0.1
 
 - Package the CF-19 Mk6 screen and speaker fixes as shell-independent Python tools.
@@ -15,11 +27,3 @@
 
 GNOME physical validation and clean-install validation remain pending. This is a
 early release, not a claim that all CF-19 revisions or desktop layouts work.
-
-## Unreleased
-
-- Add experimental CF-19 tablet-button driver and per-user GTK4 settings/helper
-  using the Global Shortcuts portal; customizable actions and Wayland adapters.
-- Add DKMS setup/removal documentation and simulated tests. Target kernel build
-  and all physical button/rotation/session acceptance checks remain required.
-- Preserve version 0.0.1 and existing release tag.
