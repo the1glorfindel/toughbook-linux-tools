@@ -7,11 +7,18 @@ workflow.
 
 ## Install
 
-From the project directory, as the logged-in desktop user:
+From a fresh Ubuntu desktop, as the logged-in user:
 
 ```sh
+sudo apt-get update
+sudo apt-get install -y git
+git clone https://github.com/the1glorfindel/toughbook-linux-tools.git
+cd toughbook-linux-tools
 bash tools/setup-ubuntu.sh
+python3 toughbook-tools.py --status
 ```
+
+Open **Toughbook Tools** from the application menu after setup finishes.
 
 The script uses APT for Python, D-Bus, Tk, XWayland, PipeWire, WirePlumber,
 ALSA, portal, DKMS, compiler, Secure Boot, and matching kernel-header packages.

@@ -20,12 +20,21 @@ other audio codecs are outside the tested scope. The detailed
 
 ### Ubuntu
 
-On Ubuntu, log in to a GNOME or KDE **Wayland** session and run this from the
-project directory as your desktop user:
+On Ubuntu, log in to a GNOME or KDE **Wayland** session. From a fresh install,
+run these commands in a terminal as your desktop user:
 
 ```sh
+sudo apt-get update
+sudo apt-get install -y git
+git clone https://github.com/the1glorfindel/toughbook-linux-tools.git
+cd toughbook-linux-tools
 bash tools/setup-ubuntu.sh
+python3 toughbook-tools.py --status
 ```
+
+Open **Toughbook Tools** from the application menu. If you already cloned the
+repository, run `git pull` inside it and then rerun `bash tools/setup-ubuntu.sh`
+to update the installed app.
 
 The script installs APT dependencies, including matching kernel headers when
 available, then installs the app menu launcher. It uses Ubuntu's PySide6 package
