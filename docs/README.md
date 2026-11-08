@@ -8,6 +8,9 @@ selection options.
 
 ## Issue and feature guides
 
+- [Ubuntu bring-up](ubuntu.md): installation, distribution differences, and
+  first-run checks after switching systems.
+
 - [Finger-touch calibration](screen-calibration.md): why finger coordinates
   miss their targets, how KDE/GNOME calibration works, and recovery steps.
 - [Internal-speaker repair](audio-fix.md): the observed mixer/profile cause,
@@ -15,7 +18,7 @@ selection options.
 - [Tablet buttons](tablet-buttons.md): desktop actions, customization, portal
   shortcuts, rotation, and session troubleshooting.
 - [Tablet-button driver](driver-installation.md): missing ACPI binding, exact
-  Mk6 firmware mapping, Fedora/DKMS setup, Secure Boot, and driver recovery.
+  Mk6 firmware mapping, Fedora/Ubuntu DKMS setup, Secure Boot, and driver recovery.
 
 ## Project notes
 

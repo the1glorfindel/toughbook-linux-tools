@@ -1,4 +1,4 @@
-"""Unified Qt application shell for Toughbook Fedora Tools."""
+"""Unified Qt application shell for Toughbook Tools."""
 from datetime import datetime
 from pathlib import Path
 import sys

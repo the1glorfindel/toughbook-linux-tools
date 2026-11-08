@@ -14,14 +14,14 @@ fi
 for program in make gcc modinfo udevadm; do
     command -v "$program" >/dev/null || { printf 'Missing build tool: %s\n' "$program" >&2; exit 1; }
 done
-[[ -d /usr/src/kernels/$(uname -r) ]] || { printf 'Install matching kernel-devel first.\n' >&2; exit 1; }
+[[ -d /lib/modules/$(uname -r)/build ]] || { printf 'Install matching kernel headers for %s first.\n' "$(uname -r)" >&2; exit 1; }
 if [[ -e $target || -e $udev_rule ]]; then
     printf 'A source directory or udev rule already exists. Inspect it before replacing anything.\n' >&2
     exit 1
 fi
 
 if ! command -v dkms >/dev/null; then
-	printf 'DKMS is required. Install the Fedora dkms package and kernel-devel for the running kernel.\n' >&2
+	printf 'DKMS is required. Install dkms and matching kernel headers for the running kernel.\n' >&2
 	exit 1
 fi
 

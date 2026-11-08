@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Unified launcher and per-user installer for Toughbook Fedora Tools. SPDX-License-Identifier: MIT"""
+"""Unified launcher and per-user installer for Toughbook Tools. SPDX-License-Identifier: MIT"""
 import argparse
 from contextlib import redirect_stdout
 import io

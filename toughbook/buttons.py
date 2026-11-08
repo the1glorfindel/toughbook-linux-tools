@@ -83,7 +83,7 @@ def execute(assignment):
     # Launch asynchronously, but reap and report nonzero exits through the GLib loop.
     from gi.repository import GLib
     if not shutil.which('systemd-run'):
-        raise ToolError('Missing systemd-run; install Fedora systemd to launch independent application scopes.')
+        raise ToolError('Missing systemd-run; install systemd to launch independent application scopes.')
     scoped = ['systemd-run', '--user', '--scope', '--quiet', '--collect', '--', *argv]
     process = subprocess.Popen(scoped, start_new_session=True)
     def finished():

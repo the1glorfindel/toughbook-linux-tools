@@ -30,7 +30,7 @@ def backend_name():
     if os.environ.get('XDG_SESSION_TYPE') != 'wayland':
         raise ToolError('Use a local KDE or GNOME Wayland session.')
     desktop = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
-    if 'kde' in desktop:
+    if 'kde' in desktop or 'plasma' in desktop:
         return 'kde'
     if 'gnome' in desktop:
         return 'gnome'
@@ -164,7 +164,7 @@ class CalibrationWindow:
         try:
             import tkinter as tk
         except ImportError as exc:
-            raise ToolError('Install python3-tkinter and xorg-x11-server-Xwayland.') from exc
+            raise ToolError('Install Tk and XWayland (Fedora: python3-tkinter, xorg-x11-server-Xwayland; Ubuntu: python3-tk, xwayland).') from exc
         self.root = tk.Tk()
         self.root.title('Toughbook touchscreen calibration')
         self.root.attributes('-fullscreen', True)
@@ -292,7 +292,7 @@ def apply_pending(path):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description='Calibrate CF-19 Wacom finger input on Fedora KDE/GNOME Wayland.')
+    parser = argparse.ArgumentParser(description='Calibrate CF-19 Wacom finger input on KDE/GNOME Wayland.')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--status', action='store_true', help='List eligible devices and session backend; no changes')
     group.add_argument('--apply', metavar='BACKUP', help='Install a measured GNOME candidate (uses sudo)')

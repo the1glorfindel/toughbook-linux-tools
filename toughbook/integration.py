@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import sys
 
 from .common import ToolError, config_dir, desktop_user
 
@@ -53,7 +54,7 @@ def install_app(page='overview'):
         shutil.copytree(stage, target)
     template = target / 'data/org.toughbook.Tools.desktop.in'
     from .buttons import exec_quote
-    command = f'/usr/bin/python3 {exec_quote(target / "toughbook-tools.py")} --page {page}'
+    command = f'{exec_quote(Path(sys.executable))} {exec_quote(target / "toughbook-tools.py")} --page {page}'
     content = template.read_text().replace('@PYTHON_EXEC@', command)
     temporary = launcher.with_suffix('.desktop.tmp')
     temporary.write_text(content)

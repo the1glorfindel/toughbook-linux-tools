@@ -1,7 +1,7 @@
 obj-m += panasonic-hbtn.o
 
 KVER ?= $(shell uname -r)
-KDIR ?= /usr/src/kernels/$(KVER)
+KDIR ?= /lib/modules/$(KVER)/build
 
 .PHONY: all clean
 all:

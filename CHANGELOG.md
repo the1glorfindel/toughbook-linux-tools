@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — Ubuntu preparation
+
+- Add Ubuntu APT/PySide6 setup and a launcher that retains the selected Python interpreter.
+- Select Fedora or Ubuntu build packages in the Buttons page and use the common
+  kernel-header link for DKMS builds.
+- Support WirePlumber 0.4 Lua rules alongside the existing 0.5 configuration
+  for the reversible speaker repair.
+- Document Ubuntu first-run checks and physical validation still needed.
+
 ## 0.2.0 — 2026-11-07
 
 - Add the Qt6 Toughbook Tools application for KDE, combining guided finger

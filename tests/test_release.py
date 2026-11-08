@@ -4,6 +4,7 @@ from contextlib import ExitStack, redirect_stdout
 import importlib.util
 import io
 import os
+import sys
 from pathlib import Path
 import shlex
 import subprocess
@@ -112,7 +113,8 @@ class ReleaseTests(unittest.TestCase):
                     'driver/70-panasonic-hbtn.rules', 'driver/install.sh',
                     'driver/uninstall.sh', 'data/org.toughbook.Buttons.desktop.in',
                     'data/org.toughbook.Buttons-autostart.desktop',
-                    'data/toughbook-buttons.service.in', 'docs/README.md',
+                    'data/toughbook-buttons.service.in', 'tools/setup-ubuntu.sh',
+                    'docs/README.md', 'docs/ubuntu.md',
                     'docs/development.md', 'docs/driver-installation.md',
                     'docs/tablet-buttons.md', 'docs/screen-calibration.md',
                     'docs/audio-fix.md'} <= names)
@@ -147,6 +149,7 @@ class IntegrationTests(unittest.TestCase):
             self.assertTrue((target/'driver/install.sh').is_file())
             self.assertTrue((target/'docs/tablet-buttons.md').is_file())
             self.assertIn('Name=Toughbook Tools', launcher.read_text())
+            self.assertIn(str(Path(sys.executable)), launcher.read_text())
             self.assertIn('NoDisplay=true', old.read_text())
             self.assertIn('Name=Toughbook Buttons', old.read_text())
             run.assert_called_once()

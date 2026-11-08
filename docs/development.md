@@ -21,7 +21,7 @@ cc -std=c99 -Wall -Wextra -Werror -o /tmp/test-hbtn driver/test-hbtn-decode.c
 /tmp/test-hbtn
 ```
 
-Building/loading the kernel module is a separate, Fedora-kernel-specific check;
+Building/loading the kernel module is a separate, host-kernel-specific check;
 see [driver installation](driver-installation.md). Physical button, display,
 touch, sound, suspend, and login checks are recorded in
 [validation status](VALIDATION.md).
@@ -35,7 +35,8 @@ python3 -m unittest discover -s tests -p test_release.py -v
 
 The archive is written beside the repository by default, with a SHA-256 file.
 The builder allowlists source and test files, all Markdown under `docs/`, the
-driver sources/license/build files, desktop integration templates, and the app icon.
+driver sources/license/build files, the Ubuntu setup script, desktop integration
+templates, and the app icon.
 It omits Git metadata, bytecode, and runtime state, and normalizes timestamps
 and ownership for reproducibility. The release test checks repeatability,
 required content, extracted command-line help, and absence of local home paths.

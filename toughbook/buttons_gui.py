@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (QComboBox, QCompleter, QFormLayout, QGroupBox, QH
     QLineEdit, QMessageBox, QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
 from . import buttons
+from . import distro
 from .common import ToolError, save_json
 
 
@@ -36,15 +37,19 @@ class ButtonsPage(QWidget):
         self.install_button = QPushButton('Install driver…')
         self.load_button = QPushButton('Load driver…')
         self.remove_button = QPushButton('Remove driver…')
-        self.packages_button = QPushButton('Install Fedora prerequisites…')
+        try:
+            package_distro = distro.distro_id()
+        except ToolError:
+            package_distro = 'supported distribution'
+        self.packages_button = QPushButton(f'Install {package_distro.title()} prerequisites…')
         self.identify_button = QPushButton('Identify physical buttons')
         for b in (self.packages_button, self.install_button, self.load_button, self.remove_button, self.identify_button): driver_buttons.addWidget(b)
         col.addLayout(driver_buttons)
-        self.driver_instructions = QLabel('Install requires make, gcc, matching kernel-devel, DKMS, and mokutil. Secure Boot stays enabled; if enabled, complete DKMS MOK enrollment manually before loading the module.')
+        self.driver_instructions = QLabel('Install requires a compiler, matching kernel headers, DKMS, and mokutil. Secure Boot stays enabled; if enabled, complete DKMS MOK enrollment manually before loading the module.')
         self.driver_instructions.setWordWrap(True); col.addWidget(self.driver_instructions)
         if Path('/sys/firmware/efi').exists() and shutil.which('mokutil'):
             try:
-                state = subprocess.run(['/usr/bin/mokutil', '--sb-state'], capture_output=True, text=True, timeout=5)
+                state = subprocess.run([shutil.which('mokutil'), '--sb-state'], capture_output=True, text=True, timeout=5)
                 self.driver_instructions.setText(self.driver_instructions.text() + '\nSecure Boot: ' + (state.stdout.strip() or state.stderr.strip()))
             except (OSError, subprocess.TimeoutExpired) as exc:
                 self.driver_instructions.setText(self.driver_instructions.text() + f'\nSecure Boot status unavailable: {exc}')
@@ -275,19 +280,25 @@ class ButtonsPage(QWidget):
     def install_packages(self):
         if self.process and self.process.state() != QProcess.NotRunning:
             return
-        packages = ['make', 'gcc', 'kernel-devel-' + os.uname().release, 'dkms', 'mokutil', 'openssl']
-        if QMessageBox.question(self, 'Install Fedora prerequisites',
-                'Install the driver build packages with DNF? This uses the running kernel version.\n\n' + ' '.join(packages),
+        try:
+            package_distro = distro.distro_id()
+            command = distro.driver_install_command()
+        except ToolError as exc:
+            self.log.emit(str(exc))
+            return
+        label = f'Install {package_distro.title()} prerequisites'
+        if QMessageBox.question(self, label,
+                f'Install the driver build packages with {Path(command[0]).name}? This uses the running kernel version.\n\n' + ' '.join(command[3:]),
                 QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel) != QMessageBox.Yes:
             return
-        self._driver_steps = [('Install Fedora prerequisites', ['/usr/bin/dnf', 'install', '-y', *packages])]
+        self._driver_steps = [(label, command)]
         label, argv = self._driver_steps.pop(0)
         self._start_privileged(argv, label)
 
     def run_driver(self, action):
         if self.process and self.process.state() != QProcess.NotRunning: return
         if action == 'load':
-            self._driver_steps = [('Load driver', ['/usr/bin/modprobe', 'panasonic-hbtn'])]
+            self._driver_steps = [('Load driver', [shutil.which('modprobe') or '/sbin/modprobe', 'panasonic-hbtn'])]
             label, argv = self._driver_steps.pop(0)
             self._start_privileged(argv, label)
             return
@@ -296,8 +307,9 @@ class ButtonsPage(QWidget):
         answer = QMessageBox.question(self, f'{action.title()} tablet button driver', detail + '\n\nRun the fixed repository script through pkexec?', QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
         if answer != QMessageBox.Yes: return
         install = ('Install driver', ['/usr/bin/bash', str(script)])
-        load = ('Load driver', ['/usr/bin/modprobe', 'panasonic-hbtn'])
-        unload = ('Unload driver', ['/usr/bin/modprobe', '-r', 'panasonic-hbtn'])
+        modprobe = shutil.which('modprobe') or '/sbin/modprobe'
+        load = ('Load driver', [modprobe, 'panasonic-hbtn'])
+        unload = ('Unload driver', [modprobe, '-r', 'panasonic-hbtn'])
         remove = ('Remove driver', ['/usr/bin/bash', str(script)])
         loaded = Path('/sys/module/panasonic_hbtn').exists()
         self._driver_steps = [install, load] if action == 'install' else ([unload, remove] if loaded else [remove])

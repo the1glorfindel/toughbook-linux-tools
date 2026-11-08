@@ -36,6 +36,10 @@ the KDE backend and remains physically unvalidated.
 sudo dnf install python3 python3-pyside6 qt6-qtwayland python3-gobject python3-dbus xdg-desktop-portal xdg-desktop-portal-kde libkscreen make gcc kernel-devel-$(uname -r) dkms mokutil openssl
 ```
 
+On Ubuntu, run `bash tools/setup-ubuntu.sh` from the repository root instead;
+it installs APT dependencies and the PySide6 environment. See
+[Ubuntu bring-up](ubuntu.md).
+
 For GNOME, replace `xdg-desktop-portal-kde` with
 `xdg-desktop-portal-gnome`. The compositor must provide the Global Shortcuts
 portal. Merely installing a package does not establish backend support: install

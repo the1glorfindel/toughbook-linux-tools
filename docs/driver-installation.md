@@ -1,7 +1,7 @@
 # Tablet-button driver: cause, setup, and recovery
 
 The CF-19 Mk6 exposes its four front controls as an ACPI `MAT001F` tablet
-device. Fedora does not bind a driver to this device by default, so the controls
+device. The reference Fedora installation did not bind a driver to this device, so the controls
 may be absent from input devices and desktop shortcut settings. The separate
 `panasonic-hbtn` module binds this device and emits F13–F16. It does not replace
 the brightness driver or alter the ordinary keyboard. The settings application
@@ -25,7 +25,7 @@ they are not guessed or converted to a nearby key. The module creates only the
 `Panasonic CF-19 Tablet Buttons` input device. The separate GPL license and
 upstream attribution are in [driver/COPYING](../driver/COPYING).
 
-## Install on Fedora
+## Install on Fedora or Ubuntu
 
 Run these commands from the repository root. Install the running kernel's
 matching development files; the script builds and registers the module through
@@ -37,6 +37,19 @@ existing installation first; the script will not replace or unbind it.
 sudo dnf install make gcc kernel-devel-$(uname -r) dkms mokutil openssl
 sudo bash driver/install.sh
 ```
+
+On Ubuntu, use the matching headers for the running kernel:
+
+```sh
+sudo apt-get update
+sudo apt-get install build-essential linux-headers-$(uname -r) dkms mokutil openssl
+sudo bash driver/install.sh
+```
+
+The installer accepts either distribution's kernel-header layout through
+`/lib/modules/$(uname -r)/build`. If that link is missing, install matching
+headers or boot a packaged kernel with headers available. The GUI's
+**Install prerequisites** button chooses APT or DNF from `/etc/os-release`.
 
 The installer installs the dedicated-device udev rule and builds/signs the
 module, but intentionally does **not** load it. Complete Secure Boot signing
@@ -87,9 +100,10 @@ and [Red Hat kernel signing](https://docs.redhat.com/en/documentation/red_hat_en
 
 ## Troubleshooting
 
-- **Installer says matching kernel development files are missing:** install
-  `kernel-devel-$(uname -r)` and retry. Confirm `uname -r` matches the installed
-  development tree under `/usr/src/kernels/`. Also install `make`, `gcc`, `dkms`,
+- **Installer says matching kernel headers are missing:** install
+  `kernel-devel-$(uname -r)` on Fedora or `linux-headers-$(uname -r)` on Ubuntu
+  and retry. Confirm `/lib/modules/$(uname -r)/build` points to a real directory.
+  Also install `make`, `gcc`, `dkms`,
   `modinfo`, and `udevadm` (the packages above provide these tools).
 - **Installer refuses an existing source, rule, module, or binding:** inspect
   `/usr/src/panasonic-hbtn-0.1.0`,

@@ -262,6 +262,7 @@ class AudioTransactionTests(TemporaryState):
         files = {p:'generated test configuration\n' for p in paths}
         with ExitStack() as stack:
             stack.enter_context(patch.object(audio,'run',side_effect=self.fake_run))
+            stack.enter_context(patch.object(audio,'wireplumber_mode',return_value='modern'))
             stack.enter_context(patch.object(audio,'same_device',return_value=CARD))
             stack.enter_context(patch.object(audio,'sink_for',return_value=SINK))
             stack.enter_context(patch.object(audio,'build_files',return_value=files))

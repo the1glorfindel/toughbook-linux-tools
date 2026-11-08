@@ -12,6 +12,11 @@ The reference installation remains untouched during release preparation. No
 public-release script was applied to its live desktop, audio configuration, or
 udev rules. GNOME Shell is not installed in the diagnostic environment.
 
+Ubuntu compatibility is prepared in code and documentation but has not yet been
+validated on a live Ubuntu installation. In particular, confirm the
+WirePlumber 0.4 audio path on Ubuntu 24.04 and the installed kernel's DKMS
+build/signing behavior before treating those features as verified.
+
 ## Automated validation
 
 Run from the extracted source root:
@@ -40,7 +45,7 @@ archive ownership and timestamps, and emits a SHA-256 checksum beside the archiv
 
 ## Physical acceptance checklist — pending for the public refactor
 
-Use a separate vanilla Fedora installation or backup first. Record the Fedora,
+Use a separate vanilla Fedora or Ubuntu installation or backup first. Record the distribution,
 KWin/GNOME, PipeWire/WirePlumber, and kernel versions plus CF-19 revision and
 sensor/codec IDs. Do not mark an item passed solely because its simulation passes.
 
@@ -74,7 +79,8 @@ sensor/codec IDs. Do not mark an item passed solely because its simulation passe
 ### Packaging/dependencies
 
 - Extract into a path with spaces and run both entrypoints from another directory.
-- Follow README dependency commands on vanilla Fedora KDE and Workstation.
+- Follow README setup commands on vanilla Fedora KDE/Workstation and Ubuntu
+  GNOME/KDE, recording package and Python-interpreter versions.
 - Confirm helpful failures when a required dependency is absent.
 - Verify the checksum, run tests from the extracted archive, and review its file list.
 - Promote GNOME from experimental only after the physical GNOME checks pass.

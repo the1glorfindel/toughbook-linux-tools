@@ -52,7 +52,7 @@ volume = merge
 
 `switch = mute` lets normal route mute handling control this element instead of
 forcing it off. `volume = merge` includes its gain in normal volume handling.
-The rest of Fedora's installed path is retained, including upstream license text
+The rest of the distribution's installed path is retained, including upstream license text
 and common directives. A private profile set replaces references to the standard
 speaker path with this tool's path. A WirePlumber rule selects that profile set
 only for the discovered internal card.
@@ -62,8 +62,13 @@ Files, relative to `$XDG_CONFIG_HOME` (normally `~/.config`):
 ```text
 alsa-card-profile/paths/cf19-output-speaker.conf
 alsa-card-profile/profile-sets/cf19.conf
-wireplumber/wireplumber.conf.d/51-cf19-speaker.conf
+wireplumber/wireplumber.conf.d/51-cf19-speaker.conf  # WirePlumber 0.5+
+wireplumber/main.lua.d/51-cf19-speaker.lua           # WirePlumber 0.4
 ```
+
+Only one of the two WirePlumber rule files is written. Ubuntu 24.04 supplies
+WirePlumber 0.4; newer releases usually use 0.5. The tool checks the installed
+version and chooses the matching format before making changes.
 
 System files under `/usr/share` are untouched. The script restarts WirePlumber,
 selects the private speaker port, sets it as default output, plays again, and
@@ -78,6 +83,14 @@ status check before starting the interactive repair:
 
 ```sh
 sudo dnf install python3 pipewire-utils pulseaudio-utils alsa-utils wireplumber
+python3 fix-audio.py --status
+python3 fix-audio.py
+```
+
+On Ubuntu, install the corresponding tools with:
+
+```sh
+sudo apt-get install pipewire-bin wireplumber pulseaudio-utils alsa-utils
 python3 fix-audio.py --status
 python3 fix-audio.py
 ```
@@ -129,7 +142,7 @@ prove those scenarios. Other CF-19 revisions and codecs may need different fixes
   attempts; if recovery reports an issue, retain the printed backup and use
   `python3 fix-audio.py --restore BACKUP` after the service is healthy.
 - **The profile files changed or an upstream update is reported:** the script
-  recognizes only the Fedora speaker-path format it knows how to transform. It
+  recognizes only the speaker-path format it knows how to transform. It
   stops before rewriting unexpected files. Review the installed upstream
   profile/package update, then rerun the tool to regenerate the private copies;
   do not edit `/usr/share` files to bypass the check.

@@ -51,6 +51,11 @@ python3 calibrate-screen.py --status
 python3 calibrate-screen.py
 ```
 
+On Ubuntu, run `bash tools/setup-ubuntu.sh` from the repository root first.
+Its APT packages include `python3-tk`, `python3-dbus`, `xwayland`, and `udev`;
+KDE sessions also receive the available `kscreen-doctor` package. See
+[Ubuntu bring-up](ubuntu.md).
+
 Use only the internal display, at 100% scale and normal landscape orientation.
 On GNOME, install the same base packages without `libkscreen`; run from the
 logged-in desktop session. Enter saves a candidate and prints the exact
