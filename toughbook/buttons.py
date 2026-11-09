@@ -327,7 +327,7 @@ class Portal:
             self.pause_match = self.bus.add_signal_receiver(self._pause_owner_changed,
                 signal_name='NameOwnerChanged', dbus_interface='org.freedesktop.DBus',
                 bus_name='org.freedesktop.DBus', arg0=sender)
-        record_status(error='Button actions paused for identification (up to 60 seconds).')
+        record_status(paused=True, error='')
 
     def _pause_owner_changed(self, name, previous, owner):
         if not owner:
@@ -335,6 +335,7 @@ class Portal:
 
     def resume_actions(self):
         from gi.repository import GLib
+        was_paused = getattr(self, 'paused', False)
         if getattr(self, 'pause_timer', None) is not None:
             GLib.source_remove(self.pause_timer)
             self.pause_timer = None
@@ -342,6 +343,8 @@ class Portal:
             self.pause_match.remove()
             self.pause_match = None
         self.paused = False
+        if was_paused:
+            record_status(paused=False)
         return False
 
     def close(self):
@@ -364,7 +367,7 @@ def daemon(backend=None):
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
         raise ToolError('Toughbook Buttons helper is already running.')
-    record_status(pid=os.getpid(), backend=backend, shortcuts={}, error='Connecting to tablet buttons…')
+    record_status(pid=os.getpid(), backend=backend, shortcuts={}, paused=False, error='Connecting to tablet buttons…')
     portal = None
     final_message = 'Helper stopped'
     try:
@@ -406,7 +409,7 @@ def daemon(backend=None):
             if portal:
                 portal.close()
         finally:
-            record_status(pid=None, shortcuts={}, error=final_message)
+            record_status(pid=None, shortcuts={}, paused=False, error=final_message)
             lock.close()
 
 

@@ -12,6 +12,18 @@ from toughbook.common import ToolError
 
 
 class HelperMonitorTests(unittest.TestCase):
+    def test_pause_status_clears_on_resume_without_erasing_other_errors(self):
+        portal = buttons.Portal.__new__(buttons.Portal)
+        portal.paused = False
+        glib = Mock()
+        with patch.dict(sys.modules, {'gi.repository': SimpleNamespace(GLib=glib)}), \
+             patch.object(buttons, 'record_status') as status:
+            portal.pause_actions()
+            status.assert_called_with(paused=True, error='')
+            portal.resume_actions()
+            status.assert_called_with(paused=False)
+            self.assertFalse(portal.paused)
+
     def test_paused_direct_reader_forwards_paired_edges_without_actions(self):
         reader = Direct.__new__(Direct)
         reader.buffer = b''

@@ -229,6 +229,7 @@ class ButtonsPage(QWidget):
             self.session_label.setText('Session helper: ' + ('running' if session.get('pid') else 'stopped'))
             lines = [f'{row[0]}: {bindings.get(key, "unbound")}' for key,row in buttons.BUTTONS.items()]
             if session.get('last_button'): lines.append('Last physical button: ' + session['last_button'])
+            if session.get('paused'): lines.append('Button actions paused for identification (up to 60 seconds).')
             if session.get('error'): lines.append('Status: ' + session['error'])
             self.live_label.setText('Live identification\n' + '\n'.join(lines))
         except Exception as exc: self.live_label.setText(f'Status unavailable: {exc}')
