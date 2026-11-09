@@ -44,8 +44,11 @@ def main():
                     '-v', f'{application}:/app:ro', 'docker.io/library/debian:bookworm-slim',
                     '/bin/sh', '-ec',
                     '! command -v python3; /app/toughbook-tools --tool check-runtime; '
-                    'for tool in pactl pw-play amixer alsactl xinput xrandr wlr-randr; do '
-                    '/app/toughbook-tools --exec-tool "$tool" --help >/dev/null; done'], check=True)
+                    'for tool in pactl pw-play amixer alsactl xinput xrandr; do '
+                    '/app/toughbook-tools --exec-tool "$tool" --help >/dev/null 2>&1; done; '
+                    # wlr-randr 0.2 connects before parsing --help. No compositor is running here.
+                    '/app/toughbook-tools --exec-tool wlr-randr --help >/tmp/wlr.log 2>&1 || '
+                    'grep -q "^failed to connect to display$" /tmp/wlr.log'], check=True)
     return 0
 
 
