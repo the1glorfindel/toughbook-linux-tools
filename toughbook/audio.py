@@ -8,6 +8,7 @@ import signal
 import shlex
 import time
 
+from . import runtime
 from .common import (ToolError, backup_path, check_model, choose, config_dir,
                      confirm, desktop_user, load_json, require, restore_files,
                      run, save_json, snapshot, state_dir)
@@ -170,7 +171,7 @@ def restore_backup(path, remove_marker=True, log_fn=None):
 def playback(sink):
     for sample in ('Front_Left', 'Front_Right'):
         run('pw-play', '--target', sink['name'],
-            f'/usr/share/sounds/alsa/{sample}.wav', timeout=12)
+            runtime.data_file(f'sounds/alsa/{sample}.wav', f'/usr/share/sounds/alsa/{sample}.wav'), timeout=12)
 
 
 def set_route(sink, port):
@@ -266,7 +267,7 @@ def repair(device, confirm_fn=None, start_fn=None, cancel_event=None, log_fn=Non
         accepted = True
         log('Speaker fix saved. Test normal volume/mute controls and a logout/login or reboot.')
         script = Path(__file__).resolve().parent.parent / 'fix-audio.py'
-        log('To uninstall: ' + shlex.join(['python3', str(script), '--restore', str(baseline)]))
+        log('To uninstall: ' + shlex.join(runtime.command('fix-audio.py', '--restore', baseline)))
         return 0
     finally:
         if not accepted:

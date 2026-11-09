@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-if __name__ == '__main__':
+def main():
     # XWayland's synthetic output geometry must not stand in for native Wayland.
     os.environ['QT_QPA_PLATFORM'] = 'wayland' if os.environ.get('XDG_SESSION_TYPE') != 'x11' and (os.environ.get('XDG_SESSION_TYPE') == 'wayland' or os.environ.get('WAYLAND_DISPLAY')) else 'xcb'
     from PySide6.QtCore import Qt
@@ -18,3 +18,7 @@ if __name__ == '__main__':
                        'normal': screen.orientation() in (Qt.ScreenOrientation.PrimaryOrientation,
                                                          Qt.ScreenOrientation.LandscapeOrientation)})
     print(json.dumps(output))
+
+
+if __name__ == '__main__':
+    main()

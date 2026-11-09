@@ -10,6 +10,7 @@ from PySide6.QtCore import QProcess, QTimer, Signal, Qt
 from PySide6.QtWidgets import (QComboBox, QCompleter, QFormLayout, QGroupBox, QHBoxLayout, QLabel,
     QLineEdit, QMessageBox, QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
+from . import runtime
 from . import buttons
 from . import distro
 from .common import ToolError, save_json
@@ -177,8 +178,7 @@ class ButtonsPage(QWidget):
             return
         process = QProcess(self)
         self.process = process
-        process.setProgram(sys.executable)
-        process.setArguments([str(Path(__file__).resolve().parents[1] / 'toughbook-buttons.py'), '--install', '--backend', self.backend_combo.currentData()])
+        runtime.configure_process(process, runtime.command('toughbook-buttons.py', '--install', '--backend', self.backend_combo.currentData()))
         process.setProcessChannelMode(QProcess.MergedChannels)
         process.readyReadStandardOutput.connect(lambda: self.log.emit(bytes(process.readAllStandardOutput()).decode(errors='replace').rstrip()))
         def finished(code, _status):
@@ -204,8 +204,7 @@ class ButtonsPage(QWidget):
             return
         process = QProcess(self)
         self.status_process = process
-        process.setProgram(sys.executable)
-        process.setArguments([str(Path(__file__).resolve().parents[1] / 'toughbook-buttons.py'), '--status'])
+        runtime.configure_process(process, runtime.command('toughbook-buttons.py', '--status'))
         def finished(code, _status):
             try:
                 if code:
@@ -244,7 +243,7 @@ class ButtonsPage(QWidget):
             self.log.emit(f'Cannot pause button actions for identification: {exc}. Start/restart the helper first.')
             return
         self.process = QProcess(self)
-        self.process.setProgram(sys.executable); self.process.setArguments([str(Path(__file__).resolve().parents[1] / 'toughbook-buttons.py'), '--monitor'])
+        runtime.configure_process(self.process, runtime.command('toughbook-buttons.py', '--monitor'))
         self.process.setProcessChannelMode(QProcess.MergedChannels)
         process = self.process
         process.readyReadStandardOutput.connect(lambda: self.log.emit(bytes(process.readAllStandardOutput()).decode(errors='replace').rstrip()))
@@ -271,8 +270,7 @@ class ButtonsPage(QWidget):
         process = QProcess(self)
         self.process = process
         self._driver_label = label
-        process.setProgram('/usr/bin/pkexec')
-        process.setArguments(argv)
+        runtime.configure_process(process, ['/usr/bin/pkexec', *argv], host=True)
         process.setProcessChannelMode(QProcess.MergedChannels)
         process.readyReadStandardOutput.connect(lambda: self.log.emit(bytes(process.readAllStandardOutput()).decode(errors='replace').rstrip()))
         def launch_error(err):
@@ -313,7 +311,7 @@ class ButtonsPage(QWidget):
             label, argv = self._driver_steps.pop(0)
             self._start_privileged(argv, label)
             return
-        script = Path(__file__).resolve().parents[1] / 'driver' / ('install.sh' if action == 'install' else 'uninstall.sh')
+        script = runtime.resources() / 'driver' / ('install.sh' if action == 'install' else 'uninstall.sh')
         detail = ('The installer checks the supported device, competing drivers, DKMS, and the current kernel headers. The module will then be loaded. If Secure Boot requires MOK enrollment, finish it manually and retry loading.' if action == 'install' else 'The module will be unloaded, then this driver version’s DKMS registration, source, and udev rule will be removed.')
         answer = QMessageBox.question(self, f'{action.title()} tablet button driver', detail + '\n\nRun the fixed repository script through pkexec?', QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
         if answer != QMessageBox.Yes: return

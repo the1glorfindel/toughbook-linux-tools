@@ -11,7 +11,7 @@ import tempfile
 import time
 import sys
 
-from . import session
+from . import session, runtime
 from .xinput import XInput
 
 from .affine import IDENTITY, TARGETS, compose, fit, from_kwin, to_kwin, validate
@@ -79,7 +79,8 @@ def layout(backend):
         require('kscreen-doctor')
         return kde_layout(json.loads(run('kscreen-doctor', '-j').stdout))
     if backend in ('libinput', 'x11'):
-        return generic_layout(json.loads(run(qt_interpreter(), Path(__file__).with_name('display_info.py')).stdout))
+        argv = runtime.command('display_info.py') if runtime.frozen() else [qt_interpreter(), Path(__file__).with_name('display_info.py')]
+        return generic_layout(json.loads(run(*argv).stdout))
     dbus = dbus_module()
     obj = dbus.SessionBus().get_object('org.gnome.Mutter.DisplayConfig', '/org/gnome/Mutter/DisplayConfig')
     return gnome_layout(dbus.Interface(obj, 'org.gnome.Mutter.DisplayConfig').GetCurrentState(timeout=10))
@@ -137,13 +138,12 @@ def install_activation(script):
     from .buttons import exec_quote
     from .integration import paths
     installed = paths()[0] / 'calibrate-screen.py'
-    if installed.is_file():
+    if installed.is_file() or (installed.parent / 'toughbook-tools').is_file():
         script = installed
     path = config_dir() / 'autostart/org.toughbook.Touchscreen.desktop'
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text('[Desktop Entry]\nType=Application\nName=Toughbook touch calibration\n'
-                    'NoDisplay=true\nExec=' + exec_quote(sys.executable) + ' ' + exec_quote(script)
-                    + ' --activate\n')
+                    'NoDisplay=true\nExec=' + ' '.join(exec_quote(arg) for arg in runtime.command('calibrate-screen.py', '--activate', root=Path(script).parent)) + '\n')
 
 
 class KWin:
@@ -360,7 +360,7 @@ class CalibrationWindow:
 
 def command(flag, path):
     script = Path(__file__).resolve().parent.parent / 'calibrate-screen.py'
-    return shlex.join(['python3', str(script), flag, str(path)])
+    return shlex.join(runtime.command('calibrate-screen.py', flag, path))
 
 
 def apply_pending(path, privilege='sudo'):
@@ -468,7 +468,7 @@ def main(argv=None):
             if live:
                 if backend == 'x11':
                     save_activation(data)
-                    install_activation(Path(__file__).resolve().parents[1] / 'calibrate-screen.py')
+                    install_activation(runtime.application_root() / 'calibrate-screen.py')
                 data['status'] = 'accepted'
                 save_json(path, data)
             accepted = True

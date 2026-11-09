@@ -9,6 +9,7 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QMainWindow,
     QPushButton, QPlainTextEdit, QStackedWidget, QVBoxLayout, QWidget, QFileDialog)
 
+from . import runtime
 from .screen_gui import ScreenPage
 from .audio_gui import AudioPage
 from .buttons_gui import ButtonsPage
@@ -124,8 +125,7 @@ class MainWindow(QMainWindow):
             return
         process = QProcess(self)
         self._overview_process = process
-        process.setProgram(sys.executable)
-        process.setArguments([str(Path(__file__).resolve().parents[1] / 'toughbook-tools.py'), '--status'])
+        runtime.configure_process(process, runtime.command('toughbook-tools.py', '--status'))
         def finished(code, _status):
             try:
                 if code:

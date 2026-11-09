@@ -43,7 +43,7 @@ class ButtonsTests(unittest.TestCase):
         app.get_filename.return_value='/usr/share/applications/test with spaces.desktop'
         with patch.dict(sys.modules, {'gi':gi,'gi.repository':gi.repository}), patch.object(b.shutil,'which',return_value='/usr/bin/gio'), patch.object(b.subprocess,'Popen') as launch:
             b.execute({'type':'application','value':'test.desktop'})
-            self.assertEqual(launch.call_args.args[0][-3:], ['gio','launch','/usr/share/applications/test with spaces.desktop'])
+            self.assertEqual(launch.call_args.args[0][-3:], ['--tool', 'launch-application', 'test.desktop'])
             self.assertIn('--scope',launch.call_args.args[0])
 
     def test_missing_command_actionable(self):

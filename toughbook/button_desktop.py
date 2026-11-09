@@ -7,7 +7,7 @@ import shutil
 import shlex
 import subprocess
 
-from . import session
+from . import session, runtime
 
 from .common import ToolError, require, run, state_dir
 
@@ -58,7 +58,7 @@ def _spawn_available(commands, purpose, independent=False):
                 from .buttons import execute
                 execute({'type': 'command', 'value': shlex.join(command)})
                 return None
-            return subprocess.Popen(command, start_new_session=True)
+            return runtime.host_popen(command, start_new_session=True)
     raise ToolError(f'No compatible {purpose} is installed. Assign its executable in the button settings.')
 
 

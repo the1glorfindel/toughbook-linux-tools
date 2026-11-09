@@ -7,14 +7,17 @@ import shutil
 import subprocess
 import time
 
+from . import runtime
+
 
 class ToolError(Exception):
     pass
 
 
 def run(*args, timeout=20, check=True, env=None):
+    argv, env = runtime.program_invocation(args, env)
     try:
-        result = subprocess.run([str(a) for a in args], capture_output=True,
+        result = subprocess.run(argv, capture_output=True,
                                 text=True, timeout=timeout, env=env)
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise ToolError(f'Cannot run {args[0]}: {exc}') from exc
@@ -24,7 +27,7 @@ def run(*args, timeout=20, check=True, env=None):
 
 
 def require(*programs):
-    missing = [p for p in programs if not shutil.which(p)]
+    missing = [p for p in programs if not runtime.which(p)]
     if missing:
         raise ToolError('Missing programs: ' + ', '.join(missing) + '. See README dependencies.')
 

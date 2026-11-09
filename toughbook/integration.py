@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 import sys
 
+from . import runtime
 from .common import ToolError, config_dir, desktop_user
 
 
@@ -27,7 +28,7 @@ def install_app(page='overview'):
     """Install/update the complete source tree and unified launcher for this user."""
     desktop_user()
     target, launcher, old_launcher = paths()
-    root = Path(__file__).resolve().parents[1]
+    root = runtime.application_root()
     target.parent.mkdir(parents=True, exist_ok=True)
     launcher.parent.mkdir(parents=True, exist_ok=True)
     service = config_dir() / 'systemd/user/toughbook-buttons.service'
@@ -35,12 +36,12 @@ def install_app(page='overview'):
     was_active = False
     was_failed = False
     if had_service:
-        was_active = subprocess.run(['systemctl', '--user', 'is-active', '--quiet',
+        was_active = runtime.host_run(['systemctl', '--user', 'is-active', '--quiet',
                                      'toughbook-buttons.service']).returncode == 0
-        was_failed = subprocess.run(['systemctl', '--user', 'is-failed', '--quiet',
+        was_failed = runtime.host_run(['systemctl', '--user', 'is-failed', '--quiet',
                                      'toughbook-buttons.service']).returncode == 0
         if was_active:
-            stopped = subprocess.run(['systemctl', '--user', 'stop', 'toughbook-buttons.service'],
+            stopped = runtime.host_run(['systemctl', '--user', 'stop', 'toughbook-buttons.service'],
                                      capture_output=True, text=True)
             if stopped.returncode:
                 raise ToolError('Cannot stop the existing button helper for upgrade: ' + stopped.stderr.strip())
@@ -48,44 +49,48 @@ def install_app(page='overview'):
     # from the installed copy. Preserve the legacy button helper's service state.
     with tempfile.TemporaryDirectory(prefix='toughbook-tools-') as temp:
         stage = Path(temp) / 'toughbook-tools'
-        shutil.copytree(root, stage, ignore=shutil.ignore_patterns('__pycache__', '.git', '*.pyc'))
+        ignored = ['__pycache__', '.git', '*.pyc']
+        if not runtime.frozen():
+            ignored += ['dist', 'build', '.venv', '.packaging-work']
+        shutil.copytree(root, stage, ignore=shutil.ignore_patterns(*ignored))
         if target.exists():
             shutil.rmtree(target)
         shutil.copytree(stage, target)
     from .screen import install_activation
     install_activation(target / 'calibrate-screen.py')
-    template = target / 'data/org.toughbook.Tools.desktop.in'
+    content_root = runtime.resources(target)
+    template = content_root / 'data/org.toughbook.Tools.desktop.in'
     from .buttons import exec_quote
-    command = f'{exec_quote(Path(sys.executable))} {exec_quote(target / "toughbook-tools.py")} --page {page}'
+    command = ' '.join(exec_quote(arg) for arg in runtime.command('toughbook-tools.py', '--page', page, root=target))
     content = template.read_text().replace('@PYTHON_EXEC@', command)
     temporary = launcher.with_suffix('.desktop.tmp')
     temporary.write_text(content)
     temporary.replace(launcher)
     icon = icon_path()
     icon.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(target / 'data/org.toughbook.Tools.svg', icon)
+    shutil.copy2(content_root / 'data/org.toughbook.Tools.svg', icon)
     # Migrate an existing helper service to the complete installed tree while
     # retaining whether it was active. Merely installing the app never starts it.
     if had_service:
         service.parent.mkdir(parents=True, exist_ok=True)
-        service_command = f'/usr/bin/python3 {exec_quote(target / "toughbook-buttons.py", systemd=True)}'
-        service.write_text((target/'data/toughbook-buttons.service.in').read_text().replace('@SERVICE_EXEC@', service_command))
+        service_command = ' '.join(exec_quote(arg, systemd=True) for arg in runtime.command('toughbook-buttons.py', root=target))
+        service.write_text((content_root/'data/toughbook-buttons.service.in').read_text().replace('@SERVICE_EXEC@', service_command))
     if (config_dir() / 'autostart/org.toughbook.Buttons.desktop').exists():
         from .buttons import write_autostart
         write_autostart(target / 'toughbook-buttons.py')
     # The portal still registers as org.toughbook.Buttons and requires app info
     # for that ID. Keep its desktop file hidden from the menu.
-    button_command = f'/usr/bin/python3 {exec_quote(target / "toughbook-buttons.py")}'
-    button_entry = (target / 'data/org.toughbook.Buttons.desktop.in').read_text().replace('@PYTHON_EXEC@', button_command)
+    button_command = ' '.join(exec_quote(arg) for arg in runtime.command('toughbook-buttons.py', root=target))
+    button_entry = (content_root / 'data/org.toughbook.Buttons.desktop.in').read_text().replace('@PYTHON_EXEC@', button_command)
     if 'NoDisplay=true' not in button_entry:
         button_entry += '\nNoDisplay=true\n'
     old_launcher.write_text(button_entry)
     legacy = Path(os.environ.get('XDG_DATA_HOME') or Path.home() / '.local/share') / 'toughbook-buttons'
     if legacy != target and legacy.exists():
         shutil.rmtree(legacy)
-    subprocess.run(['systemctl', '--user', 'daemon-reload'], capture_output=True)
+    runtime.host_run(['systemctl', '--user', 'daemon-reload'], capture_output=True)
     if was_active or was_failed:
-        subprocess.run(['systemctl', '--user', 'start', 'toughbook-buttons.service'], check=True)
+        runtime.host_run(['systemctl', '--user', 'start', 'toughbook-buttons.service'], check=True)
     return target
 
 
@@ -101,7 +106,7 @@ def uninstall_app():
     (config_dir() / 'autostart/org.toughbook.Touchscreen.desktop').unlink(missing_ok=True)
     if target.exists():
         shutil.rmtree(target)
-    subprocess.run(['systemctl', '--user', 'daemon-reload'], capture_output=True)
+    runtime.host_run(['systemctl', '--user', 'daemon-reload'], capture_output=True)
 
 
 def status():

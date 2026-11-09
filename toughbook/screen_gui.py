@@ -8,6 +8,7 @@ from PySide6.QtGui import QColor, QPainter, QPen, QInputDevice
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QDialog, QFileDialog, QListWidget, QMessageBox, QComboBox, QApplication)
 
+from . import runtime
 from . import screen
 from .affine import TARGETS, fit, compose, from_kwin, to_kwin
 from .common import ToolError, backup_path, check_model, choose, load_json, save_json, state_dir, touch_devices
@@ -287,8 +288,7 @@ class ScreenPage(QWidget):
             return
         process = QProcess(self)
         self._status_process = process
-        process.setProgram(sys.executable)
-        process.setArguments([str(Path(__file__).resolve().parents[1] / 'calibrate-screen.py'), '--status'])
+        runtime.configure_process(process, runtime.command('calibrate-screen.py', '--status'))
         def finished(code, _status):
             output = bytes(process.readAllStandardOutput()).decode(errors='replace')
             error = bytes(process.readAllStandardError()).decode(errors='replace').strip()
@@ -386,7 +386,7 @@ class ScreenPage(QWidget):
         try:
             if tx.get('backend') == 'x11':
                 screen.save_activation(tx['data'])
-                screen.install_activation(Path(__file__).resolve().parents[1] / 'calibrate-screen.py')
+                screen.install_activation(runtime.application_root() / 'calibrate-screen.py')
             save_json(tx['path'], tx['data'])
         except Exception as exc:
             self.log.emit(f'Could not save acceptance: {exc}; restoring the previous calibration.')
@@ -488,8 +488,7 @@ class ScreenPage(QWidget):
         process = QProcess(self)
         self._operation_process = process
         process.setProperty('operation', flag)
-        process.setProgram(sys.executable)
-        process.setArguments([str(Path(__file__).resolve().parents[1] / 'calibrate-screen.py'), flag, path, '--pkexec', *(['--qt'] if flag == '--verify' else [])])
+        runtime.configure_process(process, runtime.command('calibrate-screen.py', flag, path, '--pkexec', *(['--qt'] if flag == '--verify' else [])))
         process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         process.readyReadStandardOutput.connect(lambda: self.log.emit(bytes(process.readAllStandardOutput()).decode(errors='replace').strip()))
         def finished(code, _status):

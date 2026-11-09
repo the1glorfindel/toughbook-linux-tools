@@ -10,6 +10,7 @@ import subprocess
 import sys
 import uuid
 
+from . import runtime
 from .common import ToolError, config_dir, state_dir, save_json, desktop_user
 
 BUTTONS = {'keyboard': ('Keyboard', 'On-screen keyboard', 'F13', 'keyboard'),
@@ -89,7 +90,7 @@ def execute(assignment):
         app = Gio.DesktopAppInfo.new(value)
         if app is None:
             raise ToolError(f'Application {value} is missing; choose another in Toughbook Buttons.')
-        argv = ['gio', 'launch', app.get_filename()]
+        argv = runtime.command('launch-application', value)
     else:
         argv = ['/bin/sh', '-c', value] if kind == 'shell' else shlex.split(value)
     if not shutil.which(argv[0]):
@@ -99,7 +100,7 @@ def execute(assignment):
     if not shutil.which('systemd-run'):
         raise ToolError('Missing systemd-run; install systemd to launch independent application scopes.')
     scoped = ['systemd-run', '--user', '--scope', '--quiet', '--collect', '--', *argv]
-    process = subprocess.Popen(scoped, start_new_session=True)
+    process = runtime.host_popen(scoped, start_new_session=True)
     def finished():
         code = process.poll()
         if code is None:
@@ -444,8 +445,8 @@ def exec_quote(path, systemd=False):
 
 def write_autostart(script):
     _, _, autostart = integration_paths()
-    root = Path(__file__).resolve().parents[1]
-    command = '/usr/bin/python3 ' + exec_quote(script) + ' --start-session'
+    root = runtime.resources()
+    command = ' '.join(exec_quote(arg) for arg in runtime.command('toughbook-buttons.py', '--start-session', root=Path(script).parent))
     autostart.parent.mkdir(parents=True, exist_ok=True)
     autostart.write_text((root / 'data/org.toughbook.Buttons-autostart.desktop').read_text().replace('@SESSION_EXEC@', command))
 
@@ -454,22 +455,22 @@ def start_session():
     variables = [name for name in ('DISPLAY', 'WAYLAND_DISPLAY', 'XAUTHORITY', 'XDG_SESSION_TYPE',
                                   'XDG_SESSION_ID', 'XDG_CURRENT_DESKTOP', 'DBUS_SESSION_BUS_ADDRESS') if name in os.environ]
     if variables:
-        subprocess.run(['systemctl', '--user', 'import-environment', *variables], check=True)
-    subprocess.run(['systemctl', '--user', 'restart', 'toughbook-buttons.service'], check=True)
+        runtime.host_run(['systemctl', '--user', 'import-environment', *variables], check=True)
+    runtime.host_run(['systemctl', '--user', 'restart', 'toughbook-buttons.service'], check=True)
 
 
 def integration(install):
     target, menu, autostart = integration_paths()
     service = config_dir() / 'systemd/user/toughbook-buttons.service'
     if not install:
-        stopped = subprocess.run(['systemctl', '--user', 'stop', 'toughbook-buttons.service'], capture_output=True, text=True)
+        stopped = runtime.host_run(['systemctl', '--user', 'stop', 'toughbook-buttons.service'], capture_output=True, text=True)
         if stopped.returncode and service.exists():
             raise ToolError('Cannot stop the session helper: ' + stopped.stderr.strip() + '. Run uninstall from your desktop terminal; installed files have been retained.')
         for path in (menu, autostart, service):
             path.unlink(missing_ok=True)
         if target.exists():
             shutil.rmtree(target)
-        subprocess.run(['systemctl', '--user', 'daemon-reload'], capture_output=True)
+        runtime.host_run(['systemctl', '--user', 'daemon-reload'], capture_output=True)
         print('Removed app and session integration. Settings retained at', settings_path())
         return
     from .integration import install_app, paths as app_paths
@@ -478,13 +479,13 @@ def integration(install):
     script = app_target / 'toughbook-buttons.py'
     write_autostart(script)
     service.parent.mkdir(parents=True, exist_ok=True)
-    service_command = '/usr/bin/python3 ' + exec_quote(script, systemd=True)
-    service.write_text((app_target/'data/toughbook-buttons.service.in').read_text().replace('@SERVICE_EXEC@', service_command))
+    service_command = ' '.join(exec_quote(arg, systemd=True) for arg in runtime.command('toughbook-buttons.py', root=app_target))
+    service.write_text((runtime.resources(app_target)/'data/toughbook-buttons.service.in').read_text().replace('@SERVICE_EXEC@', service_command))
     # Keep the hidden desktop entry: the Global Shortcuts portal looks it up
     # when registering the helper's stable application ID.
     if target.exists() and target != app_target:
         shutil.rmtree(target)
-    subprocess.run(['systemctl', '--user', 'daemon-reload'], check=True)
+    runtime.host_run(['systemctl', '--user', 'daemon-reload'], check=True)
     start_session()
     print('Installed the Toughbook Tools helper and login autostart.')
 
