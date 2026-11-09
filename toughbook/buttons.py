@@ -473,7 +473,13 @@ def integration(install):
         runtime.host_run(['systemctl', '--user', 'daemon-reload'], capture_output=True)
         print('Removed app and session integration. Settings retained at', settings_path())
         return
-    from .integration import install_app, paths as app_paths
+    from .integration import install_app, paths as app_paths, source_interpreter
+    if not runtime.frozen():
+        interpreter = source_interpreter()
+        if interpreter != sys.executable:
+            runtime.host_run([interpreter, str(runtime.application_root() / 'toughbook-buttons.py'),
+                              '--install'], check=True)
+            return
     app_target, _, _ = app_paths()
     install_app()
     script = app_target / 'toughbook-buttons.py'

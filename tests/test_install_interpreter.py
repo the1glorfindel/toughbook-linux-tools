@@ -12,6 +12,20 @@ from toughbook.common import ToolError
 
 
 class InterpreterTests(unittest.TestCase):
+    def test_button_install_reenters_before_writing_helper_commands(self):
+        from toughbook import buttons
+        with patch.object(integration.runtime, 'frozen', return_value=False), \
+             patch.object(integration, 'source_interpreter', return_value='/managed/bin/python'), \
+             patch.object(buttons.runtime, 'host_run') as run, \
+             patch.object(integration, 'install_app') as install, \
+             patch.object(buttons, 'write_autostart') as autostart:
+            buttons.integration(True)
+            run.assert_called_once_with(
+                ['/managed/bin/python', str(integration.runtime.application_root()/'toughbook-buttons.py'),
+                 '--install'], check=True)
+            install.assert_not_called()
+            autostart.assert_not_called()
+
     def test_keeps_current_interpreter_when_all_gui_imports_work(self):
         with patch.object(integration.importlib, 'import_module') as load:
             self.assertEqual(integration.source_interpreter(), sys.executable)
