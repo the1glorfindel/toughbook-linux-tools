@@ -42,11 +42,14 @@ def check_runtime():
     gi.require_version('Gio', '2.0')
     from gi.repository import Gio, GLib
     tcl = tkinter.Tcl()
+    clients = {name: runtime.native_program(name) for name in runtime.BUNDLED_PROGRAMS}
+    if runtime.frozen() and not all(clients.values()):
+        raise ToolError('The portable bundle is missing a required native client.')
     print(json.dumps({'frozen': runtime.frozen(), 'python': sys.version.split()[0],
                       'qt': QtCore.qVersion(), 'dbus': dbus.__version__,
                       'glib': [GLib.MAJOR_VERSION, GLib.MINOR_VERSION, GLib.MICRO_VERSION],
                       'tcl': tcl.eval('info patchlevel'),
-                      'clients': {name: runtime.native_program(name) for name in runtime.BUNDLED_PROGRAMS}}, indent=2))
+                      'clients': clients}, indent=2))
     return 0
 
 

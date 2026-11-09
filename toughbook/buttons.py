@@ -99,7 +99,7 @@ def execute(assignment):
     from gi.repository import GLib
     if not shutil.which('systemd-run'):
         raise ToolError('Missing systemd-run; install systemd to launch independent application scopes.')
-    scoped = ['systemd-run', '--user', '--scope', '--quiet', '--collect', '--', *argv]
+    scoped = ['systemd-run', '--user', '--scope', '--quiet', '--collect', '--', *runtime.external_command(argv)]
     process = runtime.host_popen(scoped, start_new_session=True)
     def finished():
         code = process.poll()

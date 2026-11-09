@@ -50,7 +50,7 @@ class ButtonsPage(QWidget):
         self.driver_instructions.setWordWrap(True); col.addWidget(self.driver_instructions)
         if Path('/sys/firmware/efi').exists() and shutil.which('mokutil'):
             try:
-                state = subprocess.run([shutil.which('mokutil'), '--sb-state'], capture_output=True, text=True, timeout=5)
+                state = runtime.host_run([shutil.which('mokutil'), '--sb-state'], capture_output=True, text=True, timeout=5)
                 self.driver_instructions.setText(self.driver_instructions.text() + '\nSecure Boot: ' + (state.stdout.strip() or state.stderr.strip()))
             except (OSError, subprocess.TimeoutExpired) as exc:
                 self.driver_instructions.setText(self.driver_instructions.text() + f'\nSecure Boot status unavailable: {exc}')

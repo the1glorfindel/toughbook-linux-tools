@@ -52,5 +52,3 @@ def main(argv=None):
     except Exception as exc:
         print(f'Toughbook Tools: {exc}', file=sys.stderr)
         return 1
-
-

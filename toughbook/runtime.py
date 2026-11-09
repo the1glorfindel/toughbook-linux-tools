@@ -122,6 +122,15 @@ def host_popen(*args, **kwargs):
     return subprocess.Popen(*args, **kwargs)
 
 
+def external_command(argv):
+    """Keep bundled client configuration when an independent scope launches it."""
+    if frozen():
+        resolved = which(argv[0])
+        if resolved and Path(resolved).parent == resources() / 'bin':
+            return [sys.executable, '--exec-tool', Path(resolved).name, *argv[1:]]
+    return argv
+
+
 def configure_process(process, argv, host=False):
     process.setProgram(str(argv[0]))
     process.setArguments(list(map(str, argv[1:])))

@@ -63,6 +63,13 @@ class RuntimeTests(unittest.TestCase):
                 self.assertEqual(runtime.host_environment()['PATH'], '/usr/bin')
                 self.assertEqual(runtime.host_environment()['ALSA_CONFIG_DIR'], '/custom/alsa')
 
+    def test_independent_native_client_launch_reenters_the_portable_runtime(self):
+        with patch.object(runtime, 'frozen', return_value=True), \
+             patch.object(runtime, 'resources', return_value=Path('/bundle/_internal')), \
+             patch.object(runtime, 'which', return_value='/bundle/_internal/bin/pactl'):
+            self.assertEqual(runtime.external_command(['pactl', 'info']),
+                             [sys.executable, '--exec-tool', 'pactl', 'info'])
+
     def test_frozen_installer_keeps_runtime_for_menu_and_service(self):
         from toughbook import integration
         with tempfile.TemporaryDirectory() as folder:
