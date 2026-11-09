@@ -72,6 +72,12 @@ The default **Dedicated tablet device** backend reads only the named
 or grabs the ordinary keyboard, never uses root, and ignores all keys except
 F13–F16. The driver-provided uaccess rule grants active-session access. Do not
 join the broad `input` group. A single helper lock prevents duplicate daemons.
+The helper exclusively grabs this dedicated four-key device after revalidating
+the opened descriptor's driver name and ACPI ancestry. This prevents desktop
+defaults such as GNOME's `XF86Tools` shortcut from also opening Settings.
+Stopping the helper closes the descriptor and releases exclusive access.
+On GNOME, the Keyboard action toggles automatic on-screen-keyboard availability;
+touch a text-entry field with a finger to show it after enabling it.
 
 Actions run only for one identifiable, active, local, unlocked graphical login
 owned by the current user. Ambiguous, inactive, remote or locked sessions suppress

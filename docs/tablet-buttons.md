@@ -42,7 +42,9 @@ autostart should run `python3 toughbook-buttons.py --start-session` in their
 session startup file after installation. Do not run the helper as root.
 
 Direct mode uses the dedicated input-device name plus `MAT001F` ancestry, and
-accepts only F13–F16. It does not open/grab the ordinary keyboard. The supplied
+accepts only F13–F16. It exclusively grabs the validated dedicated four-key device
+to prevent duplicate desktop shortcuts, and releases it when the helper stops.
+It does not open/grab the ordinary keyboard. The supplied
 udev rule grants access to the active desktop user. Actions are suppressed unless
 one active, local, unlocked graphical login belonging to that user is identified.
 Disconnects are retried; held repeats and dropped event batches are ignored.

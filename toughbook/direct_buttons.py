@@ -1,5 +1,8 @@
-"""Read only the driver's dedicated evdev node; no shortcut portal or keyboard grab."""
+"""Read the driver's dedicated evdev node exclusively, leaving keyboards alone."""
+import fcntl
 import os
+from pathlib import Path
+import stat
 import struct
 
 from . import buttons, session
@@ -8,6 +11,17 @@ from .common import ToolError
 
 PACKET = struct.Struct('llHHi')
 KEYS = dict(zip(range(183, 187), buttons.BUTTONS))
+EVIOCGRAB = 0x40044590  # Linux _IOW('E', 0x90, int).
+
+
+def grab_dedicated(fd, root=Path('/sys/dev/char')):
+    """Revalidate the opened descriptor before suppressing desktop shortcuts."""
+    info = os.fstat(fd)
+    device = (root / f'{os.major(info.st_rdev)}:{os.minor(info.st_rdev)}' / 'device').resolve()
+    if (not stat.S_ISCHR(info.st_mode) or 'MAT001F:' not in str(device)
+            or (device / 'name').read_text().strip() != 'Panasonic CF-19 Tablet Buttons'):
+        raise ToolError('The opened device is not the dedicated tablet-button driver.')
+    fcntl.ioctl(fd, EVIOCGRAB, 1)
 
 
 class Direct(Portal):
@@ -44,6 +58,7 @@ class Direct(Portal):
             if len(paths) != 1:
                 raise ToolError(f'Expected one dedicated tablet device, found {len(paths)}. Install/load the driver.')
             self.fd = os.open(paths[0], os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC)
+            grab_dedicated(self.fd)
             self.watch = GLib.io_add_watch(self.fd, GLib.IO_IN | GLib.IO_HUP | GLib.IO_ERR, self.readable)
             self.buffer = b''
             self.dropped = False
