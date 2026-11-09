@@ -311,14 +311,23 @@ def _x11_output():
 
 def _settle_x11_touch(touch, matrix):
     """Reapply calibration if the desktop resets it after an output change."""
-    touch.set(matrix)
+    from .xinput import MappingNotApplied
     deadline = time.monotonic() + 6
-    stable_since = time.monotonic()
+    try:
+        touch.set(matrix)
+    except MappingNotApplied:
+        pass
+    stable_since = None
     while time.monotonic() < deadline:
         time.sleep(.1)
         actual = touch.get()['matrix']
         if max(abs(a-b) for a, b in zip(actual, matrix)) > 1e-4:
-            touch.set(matrix)
+            stable_since = None
+            try:
+                touch.set(matrix)
+            except MappingNotApplied:
+                pass
+        elif stable_since is None:
             stable_since = time.monotonic()
         elif time.monotonic() - stable_since >= 1:
             return

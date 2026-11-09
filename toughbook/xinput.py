@@ -5,6 +5,10 @@ from .affine import validate
 from .common import ToolError, require, run, udev_properties
 
 
+class MappingNotApplied(ToolError):
+    """The same finger device remains present but its matrix did not stick."""
+
+
 class XInput:
     def __init__(self, device):
         if session.kind() != 'x11':
@@ -49,7 +53,7 @@ class XInput:
             *matrix, 0, 0, 1)
         actual = self.get()['matrix']
         if max(abs(a-b) for a,b in zip(actual, matrix)) > 1e-4:
-            raise ToolError('X11 did not accept the calibration.')
+            raise MappingNotApplied('X11 did not accept the calibration.')
 
     def restore(self, previous):
         self.set(previous['matrix'])
