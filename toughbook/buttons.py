@@ -288,6 +288,7 @@ class Portal:
         if str(session) != self.session or key not in BUTTONS or key in self.active:
             return
         self.active.add(key)
+        self.button_event(key, 1)
         try:
             record_status(last_button=BUTTONS[key][0], error='')
             if getattr(self, 'paused', False):
@@ -299,7 +300,14 @@ class Portal:
 
     def deactivated(self, session, key, timestamp, options):
         if str(session) == self.session:
+            if str(key) in self.active:
+                self.button_event(str(key), 0)
             self.active.discard(str(key))
+
+    def button_event(self, key, value):
+        callback = getattr(self, 'notify_button', None)
+        if callback:
+            callback(BUTTONS[key][0], 'pressed' if value else 'released')
 
     def configure(self):
         if not self.session:
@@ -367,6 +375,9 @@ def daemon(backend=None):
             portal = Portal()
         from dbus import service
         class Control(service.Object):
+            @service.signal(CONTROL_IFACE, signature='ss')
+            def ButtonEvent(self, name, edge):
+                pass
             @service.method(CONTROL_IFACE, in_signature='', out_signature='')
             def Configure(self):
                 portal.configure()
@@ -378,6 +389,7 @@ def daemon(backend=None):
                 portal.resume_actions()
         control_name = service.BusName(CONTROL_IFACE, bus=portal.bus, do_not_queue=True)
         control = Control(control_name, CONTROL_PATH)
+        portal.notify_button = control.ButtonEvent
         loop = GLib.MainLoop()
         import signal
         def stop(*args):
@@ -398,7 +410,40 @@ def daemon(backend=None):
             lock.close()
 
 
+def monitor_helper():
+    """Observe the helper without competing with its exclusive evdev reader."""
+    import dbus
+    from dbus.mainloop.glib import DBusGMainLoop
+    from gi.repository import GLib
+    DBusGMainLoop(set_as_default=True)
+    bus = dbus.SessionBus(private=True)
+    matches = []
+    try:
+        if not bus.name_has_owner(CONTROL_IFACE):
+            return False
+        loop = GLib.MainLoop()
+        def event(name, edge):
+            if str(name) in {row[0] for row in BUTTONS.values()} and str(edge) in ('pressed', 'released'):
+                print(f'{name} {edge}', flush=True)
+        def stopped(name, previous, owner):
+            if not owner:
+                loop.quit()
+        matches.append(bus.add_signal_receiver(event, signal_name='ButtonEvent',
+                       dbus_interface=CONTROL_IFACE, bus_name=CONTROL_IFACE, path=CONTROL_PATH))
+        matches.append(bus.add_signal_receiver(stopped, signal_name='NameOwnerChanged',
+                       dbus_interface='org.freedesktop.DBus', bus_name='org.freedesktop.DBus', arg0=CONTROL_IFACE))
+        print('Identifying buttons through the running helper. Ctrl+C to stop.', flush=True)
+        loop.run()
+        raise ToolError('Button helper stopped; restart it before identification.')
+    finally:
+        for match in matches:
+            match.remove()
+        bus.close()
+
+
 def monitor():
+    if monitor_helper():
+        return
     import struct
     paths = devices()
     if len(paths) != 1:

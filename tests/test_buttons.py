@@ -150,7 +150,8 @@ class ButtonsTests(unittest.TestCase):
             path.write_bytes(b''.join(packet.pack(0,0,*event) for event in
                 [(4,4,8),(1,183,1),(1,183,2),(4,4,8),(1,183,0)]))
             output=io.StringIO()
-            with patch.object(b,'devices',return_value=[str(path)]), redirect_stdout(output):
+            with patch.object(b,'devices',return_value=[str(path)]), \
+                 patch.object(b, 'monitor_helper', return_value=False), redirect_stdout(output):
                 with self.assertRaisesRegex(ToolError,'disconnected'): b.monitor()
             self.assertEqual(output.getvalue().count('Keyboard pressed'),1)
             self.assertEqual(output.getvalue().count('Keyboard released'),1)

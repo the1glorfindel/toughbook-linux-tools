@@ -84,6 +84,9 @@ owned by the current user. Ambiguous, inactive, remote or locked sessions suppre
 actions. Press/release tracking suppresses held repeats; dropped input batches
 are discarded. Disconnects trigger reconnection to the dedicated device.
 Identification pauses actions, with automatic timeout recovery.
+While the helper runs, identification receives named press/release events over
+its session D-Bus interface, leaving the dedicated device exclusively held.
+Without a helper, the command-line monitor reads the dedicated evdev node directly.
 
 Choose **Desktop shortcut portal** and restart the helper to retain the previous
 compositor-approved shortcut behavior. Portal support and key conflicts then

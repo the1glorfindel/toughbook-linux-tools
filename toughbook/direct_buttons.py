@@ -111,11 +111,14 @@ class Direct(Portal):
                 continue
             key = KEYS[code]
             if value == 0:
+                if key in self.active:
+                    self.button_event(key, 0)
                 self.active.discard(key)
                 continue
             if key in self.active:
                 continue
             self.active.add(key)
+            self.button_event(key, 1)
             buttons.record_status(last_button=buttons.BUTTONS[key][0])
             if self.paused:
                 continue
