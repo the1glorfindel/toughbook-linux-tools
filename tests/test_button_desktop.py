@@ -11,6 +11,27 @@ from toughbook.common import ToolError
 
 
 class BackendTests(unittest.TestCase):
+    def test_x11_mapping_is_reapplied_after_desktop_reset(self):
+        target = desktop.X11_ROTATIONS['right']
+        touch = Mock()
+        touch.get.side_effect = [{'matrix': [1, 0, 0, 0, 1, 0]}] + [{'matrix': target}] * 20
+        ticks = iter(n / 4 for n in range(100))
+        with patch.object(desktop.time, 'monotonic', side_effect=lambda: next(ticks)), \
+             patch.object(desktop.time, 'sleep'):
+            desktop._settle_x11_touch(touch, target)
+        self.assertEqual(touch.set.call_count, 2)
+        touch.set.assert_called_with(target)
+        self.assertGreater(touch.get.call_count, 1)
+
+    def test_x11_mapping_that_never_stabilizes_fails_boundedly(self):
+        touch = Mock()
+        touch.get.return_value = {'matrix': [1, 0, 0, 0, 1, 0]}
+        ticks = iter(n / 4 for n in range(100))
+        with patch.object(desktop.time, 'monotonic', side_effect=lambda: next(ticks)), \
+             patch.object(desktop.time, 'sleep'):
+            with self.assertRaisesRegex(ToolError, 'keeps resetting'):
+                desktop._settle_x11_touch(touch, desktop.X11_ROTATIONS['right'])
+
     def test_gnome_launcher_uses_public_overview_property(self):
         dbus = Mock()
         with patch.object(desktop, 'dbus_module', return_value=dbus):

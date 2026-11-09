@@ -287,21 +287,21 @@ class PortableActionTests(unittest.TestCase):
         for failure in (False, True):
             touch = Mock()
             touch.get.return_value = {'matrix': affine.IDENTITY}
-            touch.set.side_effect = ToolError('readback') if failure else None
             old = {'name': 'LVDS-1', 'rotation': 'normal'}
             new = {'name': 'LVDS-1', 'rotation': 'right'}
-            with patch.object(desktop, '_x11_output', side_effect=[old, old] if failure else [old, new]), \
+            with patch.object(desktop, '_x11_output', side_effect=[old, old, old] if failure else [old, new]), \
+                 patch.object(desktop, '_settle_x11_touch') as settle, \
                  patch.object(desktop, '_save_recovery'), patch.object(desktop, 'run') as run, \
                  patch('toughbook.common.touch_devices', return_value=[DEVICE]), \
                  patch.object(xinput, 'XInput', return_value=touch):
                 if failure:
                     with self.assertRaisesRegex(ToolError, 'restored'):
                         desktop._rotate_x11()
-                    touch.restore.assert_called_once()
+                    settle.assert_called_once_with(touch, affine.IDENTITY)
                     self.assertEqual(run.call_args.args[-1], 'normal')
                 else:
                     desktop._rotate_x11()
-                    touch.set.assert_called_once_with(desktop.X11_ROTATIONS['right'])
+                    settle.assert_called_once_with(touch, desktop.X11_ROTATIONS['right'])
 
     def test_wlroots_rotation_and_rejected_transform_recovery(self):
         old = {'name': 'LVDS-1', 'enabled': True, 'transform': 'normal'}

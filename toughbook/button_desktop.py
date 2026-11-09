@@ -6,6 +6,7 @@ import re
 import shutil
 import shlex
 import subprocess
+import time
 
 from . import session, runtime
 
@@ -308,6 +309,22 @@ def _x11_output():
     return outputs[0]
 
 
+def _settle_x11_touch(touch, matrix):
+    """Reapply calibration if the desktop resets it after an output change."""
+    touch.set(matrix)
+    deadline = time.monotonic() + 6
+    stable_since = time.monotonic()
+    while time.monotonic() < deadline:
+        time.sleep(.1)
+        actual = touch.get()['matrix']
+        if max(abs(a-b) for a, b in zip(actual, matrix)) > 1e-4:
+            touch.set(matrix)
+            stable_since = time.monotonic()
+        elif time.monotonic() - stable_since >= 1:
+            return
+    raise ToolError('The desktop keeps resetting the X11 touch mapping after rotation.')
+
+
 def _rotate_x11():
     from .affine import compose
     from .common import choose, touch_devices
@@ -324,16 +341,16 @@ def _rotate_x11():
     _save_recovery({'backend': 'x11', 'output': output, 'touch': previous})
     try:
         run('xrandr', '--output', output['name'], '--rotate', new)
-        touch.set(matrix)
         if _x11_output() != {'name': output['name'], 'rotation': new}:
             raise ToolError('X11 did not apply the requested rotation.')
+        _settle_x11_touch(touch, matrix)
     except Exception as exc:
         failures = []
         def restore_output():
             run('xrandr', '--output', output['name'], '--rotate', old)
             if _x11_output() != output:
                 raise ToolError('X11 did not restore the previous orientation.')
-        for restore in (restore_output, lambda: touch.restore(previous)):
+        for restore in (restore_output, lambda: _settle_x11_touch(touch, previous['matrix'])):
             try:
                 restore()
             except Exception as failure:
