@@ -1,7 +1,13 @@
-"""Desktop button actions for KDE and GNOME Wayland sessions. SPDX-License-Identifier: MIT"""
+"""Capability-based desktop button actions for Wayland and X11. SPDX-License-Identifier: MIT"""
 import json
 import os
 import tempfile
+import re
+import shutil
+import shlex
+import subprocess
+
+from . import session
 
 from .common import ToolError, require, run, state_dir
 
@@ -20,29 +26,66 @@ def dbus_module():
 
 
 def backend_name():
-    if os.environ.get('XDG_SESSION_TYPE') != 'wayland':
-        raise ToolError('Desktop button actions require a KDE or GNOME Wayland session.')
-    desktop = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
-    if 'kde' in desktop or 'plasma' in desktop:
-        return 'kde'
-    if 'gnome' in desktop:
-        return 'gnome'
-    raise ToolError('Supported desktops are KDE Plasma and GNOME on Wayland.')
+    return session.compositor()
 
 
 def _lock():
     dbus = dbus_module()
     bus = dbus.SessionBus()
-    if os.environ.get('XDG_CURRENT_DESKTOP', '').lower().find('gnome') >= 0:
+    for service, path in (('org.freedesktop.ScreenSaver', '/org/freedesktop/ScreenSaver'),
+                          ('org.gnome.ScreenSaver', '/org/gnome/ScreenSaver'),
+                          ('org.cinnamon.ScreenSaver', '/org/cinnamon/ScreenSaver'),
+                          ('org.mate.ScreenSaver', '/org/mate/ScreenSaver')):
         try:
-            bus.get_object('org.gnome.ScreenSaver', '/org/gnome/ScreenSaver').Lock()
+            dbus.Interface(bus.get_object(service, path), service).Lock(timeout=10)
             return
         except Exception:
             pass
     try:
-        bus.get_object('org.freedesktop.ScreenSaver', '/org/freedesktop/ScreenSaver').Lock()
+        props = session.login_session()
+        run('loginctl', 'lock-session', props['Id'])
     except Exception as exc:
-        raise ToolError(f'Could not lock the session: {exc}') from exc
+        raise ToolError(f'No session lock interface is available: {exc}. Assign your desktop locker command.') from exc
+
+
+_keyboard_process = None
+
+
+def _spawn_available(commands, purpose, independent=False):
+    for command in commands:
+        if shutil.which(command[0]):
+            if independent:
+                from .buttons import execute
+                execute({'type': 'command', 'value': shlex.join(command)})
+                return None
+            return subprocess.Popen(command, start_new_session=True)
+    raise ToolError(f'No compatible {purpose} is installed. Assign its executable in the button settings.')
+
+
+def _portable_keyboard(backend):
+    global _keyboard_process
+    if _keyboard_process is not None and _keyboard_process.poll() is None:
+        _keyboard_process.terminate()
+        return
+    commands = [['onboard'], ['matchbox-keyboard']] if backend == 'x11' else [['wvkbd-mobintl'], ['wvkbd']]
+    _keyboard_process = _spawn_available(commands, 'on-screen keyboard')
+
+
+def _launcher(backend):
+    if backend in ('kde', 'gnome'):
+        try:
+            dbus = dbus_module()
+            if backend == 'kde':
+                dbus.SessionBus().get_object('org.kde.plasmashell', '/PlasmaShell').activateLauncherMenu(timeout=10)
+            else:
+                obj = dbus.SessionBus().get_object('org.gnome.Shell', '/org/gnome/Shell')
+                dbus.Interface(obj, 'org.gnome.Shell').FocusSearch(timeout=10)
+            return
+        except Exception:
+            pass
+    commands = ([['fuzzel'], ['wofi', '--show', 'drun']] if backend != 'x11' else [])
+    commands += [['rofi', '-show', 'drun'], ['xfce4-appfinder'], ['mate-panel', '--run-dialog'], ['lxqt-runner']]
+    _spawn_available(commands, 'application launcher', independent=True)
 
 
 def _keyboard(backend):
@@ -60,9 +103,11 @@ def _keyboard(backend):
             else:
                 dbus.Interface(obj, iface).forceActivate(timeout=10)
         except Exception as exc:
-            if isinstance(exc, ToolError):
-                raise
-            raise ToolError(f'Could not toggle the KDE virtual keyboard: {exc}') from exc
+            _portable_keyboard(backend)
+            return
+        return
+    if backend != 'gnome':
+        _portable_keyboard(backend)
         return
     require('gsettings')
     current = run('gsettings', 'get', 'org.gnome.desktop.a11y.applications',
@@ -205,7 +250,7 @@ def _save_recovery(data):
 
 
 def perform(action):
-    """Perform a named hardware-button action in the current Wayland session."""
+    """Perform a named action through the active graphical session capabilities."""
     action = str(action).lower()
     if action not in ('keyboard', 'launcher', 'lock', 'rotate'):
         raise ToolError(f'Unknown desktop button action: {action}')
@@ -213,25 +258,108 @@ def perform(action):
     if action == 'keyboard':
         _keyboard(backend)
     elif action == 'launcher':
-        # Invoke the desktop's standard application launcher.
-        if backend == 'kde':
-            dbus = dbus_module()
-            try:
-                dbus.SessionBus().get_object('org.kde.plasmashell', '/PlasmaShell').activateLauncherMenu()
-            except Exception as exc:
-                raise ToolError(f'Could not open the KDE application launcher: {exc}') from exc
-        else:
-            # GNOME exposes application search through the standard Overview
-            # command on supported installations; no Shell Eval interface used.
-            dbus = dbus_module()
-            try:
-                shell = dbus.SessionBus().get_object('org.gnome.Shell', '/org/gnome/Shell')
-                dbus.Interface(shell, 'org.gnome.Shell').FocusSearch()
-            except Exception as exc:
-                raise ToolError(f'Could not open the GNOME application launcher: {exc}') from exc
+        _launcher(backend)
     elif action == 'lock':
         _lock()
     elif backend == 'kde':
         _rotate_kde()
-    else:
+    elif backend == 'gnome':
         _rotate_gnome()
+    elif backend == 'x11':
+        _rotate_x11()
+    else:
+        _rotate_wlr()
+
+
+X11_ROTATIONS = {
+    'normal': [1., 0., 0., 0., 1., 0.],
+    'right': [0., 1., 0., -1., 0., 1.],
+    'inverted': [-1., 0., 1., 0., -1., 1.],
+    'left': [0., -1., 1., 1., 0., 0.],
+}
+
+
+def _x11_output():
+    require('xrandr')
+    outputs = []
+    for line in run('xrandr', '--query').stdout.splitlines():
+        match = re.match(r'^(\S+) connected(?: primary)? (\d+)x(\d+)[+-]\d+[+-]\d+(?: (normal|left|right|inverted))? ', line)
+        if match:
+            tail = line[match.end():].split('(', 1)[0].strip()
+            if tail:
+                raise ToolError('Disable reflected X11 transforms before rotating.')
+            outputs.append({'name': match[1], 'rotation': match[4] or 'normal'})
+    if len(outputs) != 1 or not outputs[0]['name'].startswith(('LVDS', 'eDP', 'DSI')):
+        raise ToolError('Rotation requires the internal display as the sole active output.')
+    return outputs[0]
+
+
+def _rotate_x11():
+    from .affine import compose
+    from .common import choose, touch_devices
+    from .xinput import XInput
+    output = _x11_output()
+    old = output['rotation']
+    order = ('normal', 'right', 'inverted', 'left')
+    new = order[(order.index(old) + 1) % 4]
+    touch = XInput(choose(touch_devices(), 'event'))
+    previous = touch.get()
+    # Remove the old orthogonal output transform before composing the new one.
+    inverse = X11_ROTATIONS[{'normal': 'normal', 'right': 'left', 'left': 'right', 'inverted': 'inverted'}[old]]
+    matrix = compose(X11_ROTATIONS[new], compose(inverse, previous['matrix']))
+    _save_recovery({'backend': 'x11', 'output': output, 'touch': previous})
+    try:
+        run('xrandr', '--output', output['name'], '--rotate', new)
+        touch.set(matrix)
+        if _x11_output() != {'name': output['name'], 'rotation': new}:
+            raise ToolError('X11 did not apply the requested rotation.')
+    except Exception as exc:
+        failures = []
+        def restore_output():
+            run('xrandr', '--output', output['name'], '--rotate', old)
+            if _x11_output() != output:
+                raise ToolError('X11 did not restore the previous orientation.')
+        for restore in (restore_output, lambda: touch.restore(previous)):
+            try:
+                restore()
+            except Exception as failure:
+                failures.append(str(failure))
+        raise ToolError(f'Rotation failed: {exc}. ' + ('Recovery needs attention: ' + '; '.join(failures)
+                        if failures else 'Previous display and touch mapping restored.')) from exc
+
+
+def _wlr_output():
+    require('wlr-randr')
+    outputs = json.loads(run('wlr-randr', '--json').stdout)
+    active = [o for o in outputs if o.get('enabled')]
+    if len(active) != 1 or not active[0]['name'].startswith(('LVDS', 'eDP', 'DSI')):
+        raise ToolError('Rotation requires the internal display as the sole active output.')
+    return active[0]
+
+
+def _rotate_wlr():
+    try:
+        output = _wlr_output()
+    except Exception as exc:
+        raise ToolError(f'This compositor does not expose supported output management: {exc}. '
+                        'Assign its rotation command in the button settings.') from exc
+    order = ('normal', '90', '180', '270')
+    old = str(output.get('transform', 'normal'))
+    if old not in order:
+        raise ToolError('Disable reflected output transforms before rotating.')
+    new = order[(order.index(old) + 1) % 4]
+    _save_recovery({'backend': 'wlr', 'output': output})
+    try:
+        run('wlr-randr', '--output', output['name'], '--transform', new)
+        actual = _wlr_output()
+        if actual['name'] != output['name'] or str(actual['transform']) != new:
+            raise ToolError('The compositor did not apply rotation.')
+    except Exception as exc:
+        try:
+            run('wlr-randr', '--output', output['name'], '--transform', old)
+            actual = _wlr_output()
+            if actual['name'] != output['name'] or str(actual['transform']) != old:
+                raise ToolError('The compositor did not restore rotation.')
+        except Exception as failure:
+            raise ToolError(f'Rotation failed ({exc}); recovery needs attention ({failure}).') from exc
+        raise ToolError(f'Rotation failed ({exc}); previous orientation restored.') from exc

@@ -6,15 +6,16 @@ and Arch-based distributions such as Manjaro and EndeavourOS. Detection honors
 `ID` before the ordered `ID_LIKE` compatibility hints in `/etc/os-release`.
 RHEL compatibility alone is not treated as Fedora: repository/package availability
 differs. Immutable Fedora variants (Silverblue/Kinoite), non-systemd derivatives,
-other desktops and other package managers need separate integration; automatic
+other package managers need separate integration; automatic
 setup targets traditional writable APT/DNF/Pacman desktop installations.
 
 This changes distribution packaging, not hardware support. The reference hardware
 remains the Panasonic CF-19 Mk6, Wacom `056a:0093` finger interface, Realtek
 ALC269VC and `MAT001F` tablet buttons. KDE Wayland has hardware evidence from
 Fedora; the new Qt workflows and Debian/Ubuntu/Arch installations still need the
-[physical acceptance checks](VALIDATION.md). GNOME is experimental; its touchscreen
-calibration uses `calibrate-screen.py`, not the KDE-only Qt calibration page.
+[physical acceptance checks](VALIDATION.md). Other local Wayland and X11 desktops are supported through capability-based
+backends. See [desktop compatibility](desktops.md) for calibration paths, direct
+button input and optional action providers; new paths still need physical checks.
 
 ## Setup
 
@@ -28,7 +29,8 @@ python3 tools/setup-linux.py
 python3 toughbook-tools.py --status
 ```
 
-Use `--desktop kde` or `--desktop gnome` to select dependencies explicitly.
+Use `--desktop kde`, `--desktop gnome` or `--desktop generic` to select
+integration packages explicitly. Unknown desktop names use generic packages.
 The preview makes no changes, and on Debian uses the current APT cache; actual
 setup refreshes APT metadata before resolving candidates. Pacman setup uses
 `-S --needed`, without refreshing databases, doing a full upgrade, or suppressing
@@ -64,19 +66,23 @@ polkit, GLib/Gio and ALSA packages as well.
 | `pactl` | `pulseaudio-utils` | `pulseaudio-utils` | `libpulse` |
 | Mixer / test samples | `alsa-utils` | `alsa-utils` | `alsa-utils` |
 | Session manager | `wireplumber` | `wireplumber` | `wireplumber` |
-| Portal backend | `xdg-desktop-portal-kde` or `-gnome` | same | same |
+| Portal backend | `xdg-desktop-portal-kde`, `-gnome` or generic `-gtk` | same | same |
+| Native X11 | `xinput`, `x11-xserver-utils` | `xinput`, `xrandr` | `xorg-xinput`, `xorg-xrandr` |
+| Generic Wayland rotation | `wlr-randr` | `wlr-randr` | `wlr-randr` |
 
 Debian/Ubuntu setup checks the APT candidate for PySide6. If unavailable (for
 example on Ubuntu 24.04 or Debian 12), it creates a persistent venv with
 `--system-site-packages` so distro D-Bus/GI modules remain available, and installs
-PySide6 there with pip. Pip failure stops setup before launcher installation;
+PySide6 there with pip. Setup also installs the native XCB/graphics libraries
+needed by wheel-based Qt on minimal X11 desktops (including `libxcb-cursor0`
+and `libxkbcommon-x11-0`). Pip failure stops setup before launcher installation;
 check network access, Python/wheel compatibility and enabled APT repositories.
 Keep `~/.local/share/toughbook-tools-python` or its `$XDG_DATA_HOME` equivalent.
 After a distribution Python upgrade, rerun setup to refresh the environment.
 Native PySide6 is preferred on releases offering it, including Debian 13.
 
-For GNOME calibration's dependency list and apply/login/verify flow, see the
-[touch guide](screen-calibration.md). GNOME portal availability also depends on
+For common libinput calibration's dependency list and apply/login/verify flow, see the
+[touch guide](screen-calibration.md). Optional shortcut-portal availability depends on
 the installed compositor/backend version; installing a package does not establish
 that all four shortcut actions work.
 

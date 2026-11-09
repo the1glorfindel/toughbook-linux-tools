@@ -52,6 +52,8 @@ def install_app(page='overview'):
         if target.exists():
             shutil.rmtree(target)
         shutil.copytree(stage, target)
+    from .screen import install_activation
+    install_activation(target / 'calibrate-screen.py')
     template = target / 'data/org.toughbook.Tools.desktop.in'
     from .buttons import exec_quote
     command = f'{exec_quote(Path(sys.executable))} {exec_quote(target / "toughbook-tools.py")} --page {page}'
@@ -68,6 +70,9 @@ def install_app(page='overview'):
         service.parent.mkdir(parents=True, exist_ok=True)
         service_command = f'/usr/bin/python3 {exec_quote(target / "toughbook-buttons.py", systemd=True)}'
         service.write_text((target/'data/toughbook-buttons.service.in').read_text().replace('@SERVICE_EXEC@', service_command))
+    if (config_dir() / 'autostart/org.toughbook.Buttons.desktop').exists():
+        from .buttons import write_autostart
+        write_autostart(target / 'toughbook-buttons.py')
     # The portal still registers as org.toughbook.Buttons and requires app info
     # for that ID. Keep its desktop file hidden from the menu.
     button_command = f'/usr/bin/python3 {exec_quote(target / "toughbook-buttons.py")}'
@@ -93,6 +98,7 @@ def uninstall_app():
     launcher.unlink(missing_ok=True)
     old_launcher.unlink(missing_ok=True)
     icon_path().unlink(missing_ok=True)
+    (config_dir() / 'autostart/org.toughbook.Touchscreen.desktop').unlink(missing_ok=True)
     if target.exists():
         shutil.rmtree(target)
     subprocess.run(['systemctl', '--user', 'daemon-reload'], capture_output=True)

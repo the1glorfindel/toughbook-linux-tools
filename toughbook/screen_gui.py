@@ -1,4 +1,4 @@
-"""Qt touchscreen calibration and recovery for KDE Wayland. SPDX-License-Identifier: MIT"""
+"""Qt touchscreen calibration and recovery across graphical desktops. SPDX-License-Identifier: MIT"""
 import json
 import sys
 from pathlib import Path
@@ -6,7 +6,7 @@ from pathlib import Path
 from PySide6.QtCore import QProcess, QThread, QTimer, Qt, QEvent, Signal
 from PySide6.QtGui import QColor, QPainter, QPen, QInputDevice
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QDialog, QFileDialog, QListWidget, QMessageBox, QComboBox)
+    QDialog, QFileDialog, QListWidget, QMessageBox, QComboBox, QApplication)
 
 from . import screen
 from .affine import TARGETS, fit, compose, from_kwin, to_kwin
@@ -75,7 +75,7 @@ class _Targets(QDialog):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        if self.ready and (self.width(), self.height()) != self.expected:
+        if (self.ready or self.preview or len(self.samples) == len(TARGETS)) and (self.width(), self.height()) != self.expected:
             self.ready = False
             self.samples.clear()
             self.message = 'Display size changed. Restoring the previous calibration…'
@@ -162,6 +162,45 @@ class _Targets(QDialog):
         self.close()
 
 
+def verify_targets(size):
+    """Native verification window for compositors without XWayland."""
+    import signal
+    app = QApplication.instance() or QApplication(sys.argv)
+    dialog = _Targets(size)
+    result = {'accepted': False, 'error': None}
+    def finish(accepted=False):
+        result['accepted'] = accepted
+        dialog.finish()
+        app.quit()
+    def measured(samples):
+        error = max(((size[0]*(x-tx))**2 + (size[1]*(y-ty))**2)**.5
+                    for (x,y),(tx,ty) in zip(samples, TARGETS))
+        if error > 20:
+            result['error'] = ToolError(f'Verification missed targets by up to {error:.1f}px. Restore or recalibrate.')
+            finish()
+            return
+        dialog.show_preview()
+        dialog.message = f'Verified: maximum error {error:.1f}px. Accept or cancel.'
+        dialog.keep.setText('Accept verification')
+        dialog.restore.setText('Cancel verification')
+        dialog.update()
+    dialog.measured.connect(measured)
+    dialog.accepted_result.connect(lambda: finish(True))
+    dialog.cancelled.connect(lambda: finish(False))
+    previous = {sig: signal.signal(sig, lambda *_: finish(False)) for sig in (signal.SIGINT, signal.SIGTERM)}
+    try:
+        app.exec()
+    finally:
+        for sig, handler in previous.items():
+            signal.signal(sig, handler)
+        dialog.finish()
+        dialog.deleteLater()
+        app.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    if result['error'] is not None:
+        raise result['error']
+    return result['accepted']
+
+
 class ScreenPage(QWidget):
     log = Signal(str)
     busy_changed = Signal(bool)
@@ -171,6 +210,7 @@ class ScreenPage(QWidget):
         self._busy = False
         self._thread = None
         self._status_process = None
+        self._operation_process = None
         self._dialog = None
         self._transaction = None
         self._cancel_pending = False
@@ -203,9 +243,15 @@ class ScreenPage(QWidget):
         browse = QPushButton('Choose another backup…')
         browse.clicked.connect(self.restore_file)
         recovery.addWidget(browse)
+        apply = QPushButton('Apply candidate…')
+        verify = QPushButton('Verify after login')
+        apply.clicked.connect(lambda: self._candidate_operation('--apply'))
+        verify.clicked.connect(lambda: self._candidate_operation('--verify'))
+        recovery.addWidget(apply)
+        recovery.addWidget(verify)
         layout.addLayout(recovery)
         layout.addStretch()
-        self._buttons = [self.start_button, self.refresh_button, self.restore_button, browse]
+        self._buttons = [self.start_button, self.refresh_button, self.restore_button, browse, apply, verify]
         self.refresh()
 
     def _set_busy(self, busy):
@@ -235,7 +281,7 @@ class ScreenPage(QWidget):
                 data = load_json(path, 'screen')
                 self.backups.addItem(f'{path.name} — {data.get("status", "unknown")}')
                 self.backups.item(self.backups.count() - 1).setData(Qt.ItemDataRole.UserRole, str(path))
-            except (ValueError, OSError, KeyError):
+            except (ValueError, OSError, KeyError, ToolError):
                 continue
         if self._busy or (self._status_process and self._status_process.state() != QProcess.ProcessState.NotRunning):
             return
@@ -249,7 +295,7 @@ class ScreenPage(QWidget):
             if code == 0:
                 try:
                     data = json.loads(output)
-                    self.status_label.setText(f'{data["backend"].upper()} Wayland · {len(data["devices"])} eligible finger device(s)')
+                    self.status_label.setText(f'{data["backend"].upper()} · {len(data["devices"])} eligible finger device(s)')
                     self.device_combo.clear()
                     for device in data['devices']:
                         self.device_combo.addItem(device['event'], device['event'])
@@ -271,18 +317,15 @@ class ScreenPage(QWidget):
         selected = self.device_combo.currentData()
         def prepare():
             check_model()
-            if screen.backend_name() != 'kde':
-                raise ToolError('The graphical calibration page currently supports KDE Wayland.')
-            output, width, height = screen.layout('kde')
+            backend = screen.backend_name()
+            output, width, height = screen.layout(backend)
             device = choose(touch_devices(), 'event', selected)
-            kwin = screen.KWin(device)
-            previous = kwin.get()
-            old = from_kwin(previous['matrix'])
+            live, previous, old = screen.calibration_state(backend, device)
             path = backup_path('screen')
-            data = {'kind': 'screen', 'backend': 'kde', 'identity': device['identity'],
-                    'previous': previous, 'status': 'measuring', 'session': ''}
+            data = {'kind': 'screen', 'backend': backend, 'identity': device['identity'],
+                    'previous': previous, 'status': 'measuring', 'session': screen.session_token() if live is None else ''}
             save_json(path, data)
-            return {'output': output, 'size': (width, height), 'device': device,
+            return {'backend': backend, 'output': output, 'size': (width, height), 'device': device,
                     'previous': previous, 'old': old, 'path': path, 'data': data, 'changed': False}
         self._run(prepare, self._prepared, self._failure)
 
@@ -306,17 +349,26 @@ class ScreenPage(QWidget):
             tx['data'].update(matrix=matrix, fit_error_pixels=error,
                               size=list(tx['size']), status='candidate')
             save_json(tx['path'], tx['data'])
-            tx['changed'] = True
+            tx['changed'] = tx.get('backend', 'kde') in ('kde', 'x11')
         except Exception as exc:
             self._failure(str(exc))
             return
+        if not tx['changed']:
+            self._applied(None)
+            if self._dialog is None:
+                return
+            self._dialog.message = 'Candidate measured. Save it, then Apply candidate and log out/in before verification.'
+            self._dialog.keep.setText('Save candidate')
+            self._dialog.update()
+            return
         def apply():
-            screen.KWin(tx['device']).set(to_kwin(matrix), tx['output'])
+            live = screen.XInput(tx['device']) if tx.get('backend') == 'x11' else screen.KWin(tx['device'])
+            live.set(matrix if tx.get('backend') == 'x11' else to_kwin(matrix), tx['output'])
             return True
         self._run(apply, self._applied, self._apply_failed)
 
     def _applied(self, _):
-        self.log.emit('Calibration preview applied; check finger accuracy.')
+        self.log.emit('Calibration preview applied; check finger accuracy.' if self._transaction.get('changed') else 'Candidate measured; installation and new-login verification are still required.')
         if self._cancel_pending:
             self._rollback()
         elif self._dialog:
@@ -330,14 +382,17 @@ class ScreenPage(QWidget):
         tx = self._transaction
         if not tx or not self._dialog or not self._dialog.preview:
             return
-        tx['data']['status'] = 'accepted'
+        tx['data']['status'] = 'accepted' if tx.get('backend', 'kde') in ('kde', 'x11') else 'candidate'
         try:
+            if tx.get('backend') == 'x11':
+                screen.save_activation(tx['data'])
+                screen.install_activation(Path(__file__).resolve().parents[1] / 'calibrate-screen.py')
             save_json(tx['path'], tx['data'])
         except Exception as exc:
             self.log.emit(f'Could not save acceptance: {exc}; restoring the previous calibration.')
             self._rollback()
             return
-        self.log.emit('Calibration saved by KWin.')
+        self.log.emit('Calibration saved.' if tx['data']['status'] == 'accepted' else 'Candidate saved. Select it below, apply, log out/in, then verify.')
         self._finish()
 
     def _rollback(self):
@@ -358,7 +413,7 @@ class ScreenPage(QWidget):
             self._finish()
             return
         def restore():
-            screen.KWin(tx['device']).restore(tx['previous'])
+            screen.restore_live(tx.get('backend', 'kde'), tx['device'], tx['previous'])
             tx['data']['status'] = 'cancelled'
             save_json(tx['path'], tx['data'])
             return True
@@ -368,10 +423,14 @@ class ScreenPage(QWidget):
     def cancel(self):
         if self._status_process and self._status_process.state() != QProcess.ProcessState.NotRunning:
             self._status_process.kill()
+        if self._operation_process and self._operation_process.state() != QProcess.ProcessState.NotRunning:
+            if self._operation_process.property('operation') == '--verify':
+                self._operation_process.terminate()
+            return
         self._rollback()
 
     def has_background_work(self):
-        return bool(self._status_process and self._status_process.state() != QProcess.ProcessState.NotRunning)
+        return any(p and p.state() != QProcess.ProcessState.NotRunning for p in (self._status_process, self._operation_process))
 
     def _failure(self, error):
         self.log.emit(error)
@@ -407,9 +466,48 @@ class ScreenPage(QWidget):
             return
         self._set_busy(True)
         self.log.emit(f'Restoring calibration from {path}')
-        self._run(lambda: screen.restore_backup(path),
+        self._run(lambda: screen.restore_backup(path, privilege='pkexec'),
                   lambda _: (self.log.emit('Calibration restored.'), self._set_busy(False), self.refresh()),
                   lambda error: (self.log.emit(f'Restore failed: {error}'), self._set_busy(False)))
+
+    def _candidate_operation(self, flag):
+        if self._busy:
+            return
+        item = self.backups.currentItem()
+        if not item:
+            self.log.emit('Select a saved libinput candidate first.')
+            return
+        path = item.data(Qt.ItemDataRole.UserRole)
+        try:
+            data = load_json(path, 'screen')
+            if data['backend'] not in ('gnome', 'libinput'):
+                raise ToolError('Select a libinput candidate for this operation.')
+        except Exception as exc:
+            self.log.emit(str(exc))
+            return
+        process = QProcess(self)
+        self._operation_process = process
+        process.setProperty('operation', flag)
+        process.setProgram(sys.executable)
+        process.setArguments([str(Path(__file__).resolve().parents[1] / 'calibrate-screen.py'), flag, path, '--pkexec', *(['--qt'] if flag == '--verify' else [])])
+        process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
+        process.readyReadStandardOutput.connect(lambda: self.log.emit(bytes(process.readAllStandardOutput()).decode(errors='replace').strip()))
+        def finished(code, _status):
+            self.log.emit(f'Calibration operation finished ({code}).')
+            self._operation_process = None
+            self._set_busy(False)
+            self.refresh()
+            process.deleteLater()
+        def failed(error):
+            if error == QProcess.ProcessError.FailedToStart:
+                self.log.emit(process.errorString())
+                self._operation_process = None
+                self._set_busy(False)
+                process.deleteLater()
+        process.finished.connect(finished)
+        process.errorOccurred.connect(failed)
+        self._set_busy(True)
+        process.start()
 
     def closeEvent(self, event):
         if self._busy:

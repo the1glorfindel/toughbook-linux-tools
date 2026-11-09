@@ -4,9 +4,9 @@ For shared Debian/Ubuntu, Fedora and Arch setup, start with
 [Linux installation and compatibility](linux.md).
 
 Ubuntu support is prepared for the same CF-19 Mk6 hardware as the Fedora
-release. It has not yet been physically tested on Ubuntu. Use a GNOME or KDE
-Wayland session; X11 and other CF-19 revisions remain outside the supported
-workflow.
+release. It has not yet been physically tested on Ubuntu. Use a local Wayland or X11 graphical session. See [desktop compatibility](desktops.md)
+for common calibration and dedicated-device button delivery. Other CF-19 revisions
+remain outside the tested hardware scope.
 
 ## Install
 
@@ -37,8 +37,8 @@ header tree is available. Reboot into a packaged Ubuntu kernel if needed.
 
 Run `python3 toughbook-tools.py --status` for a read-only hardware check, then
 launch **Toughbook Tools** from the application menu. The Qt calibration page
-requires KDE; GNOME calibration uses the standalone CLI. Touchscreen and button
-actions need a local Wayland desktop session. The audio repair also
+selects a live KWin/X11 path or a libinput candidate workflow. Touchscreen and
+button actions need a local graphical session. The audio repair also
 requires that the card be managed by PipeWire and WirePlumber; it will inspect
 the installed profile format before changing audio settings.
 
@@ -59,7 +59,7 @@ the installed profile format before changing audio settings.
 
 1. Confirm the CF-19 revision, Wacom finger interface, Realtek codec, and
    `MAT001F` device with `python3 toughbook-tools.py --status`.
-2. Verify the session is Wayland (`echo "$XDG_SESSION_TYPE"`) and only the
+2. Check the session type (`echo "$XDG_SESSION_TYPE"`) and ensure only the
    internal display is active before calibrating finger touch.
 3. Test speaker playback and its restoration workflow before saving a repair.
 4. Check whether an Ubuntu kernel driver already owns `MAT001F`. Install the

@@ -31,7 +31,7 @@ def require(*programs):
 
 def desktop_user():
     if os.geteuid() == 0:
-        raise ToolError('Run as your desktop user, without sudo. Only GNOME rule installation uses sudo.')
+        raise ToolError('Run as your desktop user, without sudo. System changes request authorization separately.')
 
 
 def check_model(root=Path('/sys')):

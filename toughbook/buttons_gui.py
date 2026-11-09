@@ -110,11 +110,20 @@ class ButtonsPage(QWidget):
 
         helper = QGroupBox('Shortcut helper')
         hcol = QVBoxLayout(helper)
+        self.backend_combo = QComboBox()
+        self.backend_combo.addItem('Dedicated tablet device (all desktops)', 'direct')
+        self.backend_combo.addItem('Desktop shortcut portal', 'portal')
+        try:
+            self.backend_combo.setCurrentIndex(self.backend_combo.findData(buttons.helper_backend()))
+        except Exception as exc:
+            self.log.emit(str(exc))
+        hcol.addWidget(self.backend_combo)
         self.portal_label = QLabel(''); self.portal_label.setWordWrap(True)
         self.session_label = QLabel(''); self.session_label.setWordWrap(True)
         hcol.addWidget(self.portal_label); hcol.addWidget(self.session_label)
         hbuttons = QHBoxLayout()
         start = QPushButton('Install / start login helper'); configure = QPushButton('Configure shortcuts…')
+        self.configure_button = configure
         start.clicked.connect(self.start_helper); configure.clicked.connect(self.configure_shortcuts)
         hbuttons.addWidget(start); hbuttons.addWidget(configure); hbuttons.addStretch(); hcol.addLayout(hbuttons)
         col.addWidget(helper)
@@ -169,13 +178,13 @@ class ButtonsPage(QWidget):
         process = QProcess(self)
         self.process = process
         process.setProgram(sys.executable)
-        process.setArguments([str(Path(__file__).resolve().parents[1] / 'toughbook-buttons.py'), '--install'])
+        process.setArguments([str(Path(__file__).resolve().parents[1] / 'toughbook-buttons.py'), '--install', '--backend', self.backend_combo.currentData()])
         process.setProcessChannelMode(QProcess.MergedChannels)
         process.readyReadStandardOutput.connect(lambda: self.log.emit(bytes(process.readAllStandardOutput()).decode(errors='replace').rstrip()))
         def finished(code, _status):
             self.process = None
             self.busy_changed.emit(False)
-            self.log.emit('Helper started. Approve the shortcut dialog.' if code == 0 else f'Helper installation failed ({code}). Review output.')
+            self.log.emit('Helper started. Direct mode needs no shortcut approval; portal mode opens the desktop dialog.' if code == 0 else f'Helper installation failed ({code}). Review output.')
             self.refresh_status()
             process.deleteLater()
         process.finished.connect(finished)
@@ -215,7 +224,9 @@ class ButtonsPage(QWidget):
             bindings = session.get('shortcuts', {})
             self.driver_label.setText('Driver status: ' + (', '.join(info['driver_devices']) if info['driver_devices'] else 'dedicated tablet input device not detected'))
             self.install_button.setEnabled(not bool(info['driver_devices']))
-            self.portal_label.setText('Portal: ' + info['portal'])
+            backend = session.get('backend', info.get('backend', 'direct'))
+            self.configure_button.setEnabled(backend == 'portal')
+            self.portal_label.setText('Button delivery: ' + backend + '\nPortal (optional): ' + info['portal'])
             self.session_label.setText('Session helper: ' + ('running' if session.get('pid') else 'stopped'))
             lines = [f'{row[0]}: {bindings.get(key, "unbound")}' for key,row in buttons.BUTTONS.items()]
             if session.get('last_button'): lines.append('Last physical button: ' + session['last_button'])

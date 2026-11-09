@@ -1,6 +1,6 @@
 # Toughbook Tools for Linux
 
-**Toughbook Tools** is a KDE/GNOME Wayland app for three Panasonic CF-19 Mk6
+**Toughbook Tools** is a Linux desktop app for three Panasonic CF-19 Mk6
 issues: inaccurate finger touch, silent internal speakers, and missing tablet
 buttons. It guides calibration and speaker repair, manages the four button
 assignments, and shows recovery options and troubleshooting output. The optional
@@ -8,21 +8,23 @@ button driver is GPL-2.0-only; the application is MIT licensed.
 
 | Feature | Tested hardware | Desktop support |
 | --- | --- | --- |
-| Finger touch | Wacom `056a:0093` finger interface | KDE Wayland tested; GNOME experimental |
+| Finger touch | Wacom `056a:0093` finger interface | KWin live preview, generic libinput Wayland, native X11 |
 | Internal speaker | Realtek ALC269VC | PipeWire/WirePlumber; Fedora KDE workflow tested |
-| Tablet buttons | CF-19 Mk6 board `CF19-6`, ACPI `MAT001F` | KDE Wayland tested; GNOME physical validation pending |
+| Tablet buttons | CF-19 Mk6 board `CF19-6`, ACPI `MAT001F` | Dedicated-device input across desktops; optional shortcut portal |
 
-Other CF-19 revisions, X11, the active Wacom pen, other touch controllers, and
+Other CF-19 revisions, the active Wacom pen, other touch controllers, and
 other audio codecs are outside the tested scope. The detailed
 [documentation index](docs/README.md) explains each issue and its recovery path.
 
 ## Quick start: Toughbook Tools GUI
 
 The setup tool targets **Debian-based systems (including Ubuntu), Fedora, and
-Arch-based systems** using systemd. Use a local KDE Plasma or GNOME Wayland
-session. The Qt touchscreen calibration page requires KDE; GNOME calibration
-uses the experimental standalone CLI workflow below. Other desktops and X11
-are outside the supported workflow.
+Arch-based systems** using systemd. Use a local
+**Wayland or X11** desktop or window manager. Desktop
+names do not gate the fixes. Touch calibration selects KWin, X11 or the common
+libinput rule workflow; buttons default to the dedicated input device rather
+than requiring a shortcut portal. See [desktop compatibility](docs/desktops.md)
+for action providers, login activation and compositor capabilities.
 
 Install Git and Python first if needed:
 
@@ -44,8 +46,8 @@ python3 toughbook-tools.py --status
 
 The read-only preview lists the native package command. Setup detects the
 family from `/etc/os-release`, installs dependencies through APT, DNF or Pacman,
-and installs the per-user menu launcher. Use `--desktop kde` or `--desktop gnome`
-if desktop detection is unavailable. Open **Toughbook Tools** from your application
+and installs the per-user menu launcher. Use `--desktop kde`, `--desktop gnome` or `--desktop generic`
+to choose integration packages explicitly; other desktops select generic by default. Open **Toughbook Tools** from your application
 menu. Rerun setup after `git pull` to update the installed copy.
 
 Setup uses distribution PySide6 packages when available. On Debian-based releases

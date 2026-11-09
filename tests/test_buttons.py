@@ -233,10 +233,10 @@ class ButtonsTests(unittest.TestCase):
 
     def test_daemon_setup_failure_records_stopped_and_actionable_error(self):
         import sys
-        from toughbook import button_desktop
+        from toughbook import session
         gi=Mock()
-        with tempfile.TemporaryDirectory() as folder, patch.dict(sys.modules, {'gi':gi,'gi.repository':gi.repository}), patch.object(button_desktop,'backend_name',return_value='kde'), patch.object(b,'state_dir',return_value=Path(folder)), patch.object(b,'record_status') as status, patch.object(b,'Portal',side_effect=ToolError('backend missing')):
-            with self.assertRaisesRegex(ToolError,'backend missing'): b.daemon()
+        with tempfile.TemporaryDirectory() as folder, patch.dict(sys.modules, {'gi':gi,'gi.repository':gi.repository}), patch.object(session,'kind',return_value='wayland'), patch.object(b,'state_dir',return_value=Path(folder)), patch.object(b,'record_status') as status, patch.object(b,'Portal',side_effect=ToolError('backend missing')):
+            with self.assertRaisesRegex(ToolError,'backend missing'): b.daemon('portal')
             self.assertIsNone(status.call_args.kwargs['pid'])
             self.assertIn('backend missing',status.call_args.kwargs['error'])
 
@@ -251,7 +251,7 @@ class ButtonsTests(unittest.TestCase):
             self.assertIn('NoDisplay=true', menu.read_text())
             self.assertTrue(app_menu.exists())
             self.assertIn('--daemon', (Path(folder)/'config/systemd/user/toughbook-buttons.service').read_text())
-            self.assertIn('toughbook-buttons.service', autostart.read_text())
+            self.assertIn('--start-session', autostart.read_text())
             run.assert_any_call(['systemctl','--user','restart','toughbook-buttons.service'],check=True)
             # Reinstalling from an installed copy must not copy a file onto itself.
             b.integration(True)

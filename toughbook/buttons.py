@@ -33,6 +33,20 @@ def settings_path():
     return config_dir() / 'toughbook-buttons/settings.json'
 
 
+
+def helper_backend():
+    path = config_dir() / 'toughbook-buttons/helper.json'
+    backend = json.loads(path.read_text()).get('backend', 'direct') if path.exists() else 'direct'
+    if backend not in ('direct', 'portal'):
+        raise ToolError('Unknown button backend; choose direct or portal in the app.')
+    return backend
+
+
+def save_backend(backend):
+    if backend not in ('direct', 'portal'):
+        raise ToolError('Unknown button backend.')
+    save_json(config_dir() / 'toughbook-buttons/helper.json', {'backend': backend})
+
 def validate(settings):
     if not isinstance(settings, dict) or set(settings) != set(BUTTONS):
         raise ToolError('Settings must contain exactly the four tablet buttons. Reset defaults in the app.')
@@ -329,20 +343,27 @@ class Portal:
                                 'org.freedesktop.portal.Session').Close(timeout=5)
 
 
-def daemon():
+def daemon(backend=None):
     from gi.repository import GLib
-    from .button_desktop import backend_name
-    backend_name()
+    from .session import kind
+    kind()
+    backend = backend or helper_backend()
+    if backend not in ('direct', 'portal'):
+        raise ToolError('Choose direct or portal button delivery.')
     lock = (state_dir() / 'buttons.lock').open('w')
     try:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
         raise ToolError('Toughbook Buttons helper is already running.')
-    record_status(pid=os.getpid(), shortcuts={}, error='Connecting to shortcut portal…')
+    record_status(pid=os.getpid(), backend=backend, shortcuts={}, error='Connecting to tablet buttons…')
     portal = None
     final_message = 'Helper stopped'
     try:
-        portal = Portal()
+        if backend == 'direct':
+            from .direct_buttons import Direct
+            portal = Direct()
+        else:
+            portal = Portal()
         from dbus import service
         class Control(service.Object):
             @service.method(CONTROL_IFACE, in_signature='', out_signature='')
@@ -420,6 +441,23 @@ def exec_quote(path, systemd=False):
     return '"' + value.replace('%', '%%') + '"'
 
 
+
+def write_autostart(script):
+    _, _, autostart = integration_paths()
+    root = Path(__file__).resolve().parents[1]
+    command = '/usr/bin/python3 ' + exec_quote(script) + ' --start-session'
+    autostart.parent.mkdir(parents=True, exist_ok=True)
+    autostart.write_text((root / 'data/org.toughbook.Buttons-autostart.desktop').read_text().replace('@SESSION_EXEC@', command))
+
+
+def start_session():
+    variables = [name for name in ('DISPLAY', 'WAYLAND_DISPLAY', 'XAUTHORITY', 'XDG_SESSION_TYPE',
+                                  'XDG_SESSION_ID', 'XDG_CURRENT_DESKTOP', 'DBUS_SESSION_BUS_ADDRESS') if name in os.environ]
+    if variables:
+        subprocess.run(['systemctl', '--user', 'import-environment', *variables], check=True)
+    subprocess.run(['systemctl', '--user', 'restart', 'toughbook-buttons.service'], check=True)
+
+
 def integration(install):
     target, menu, autostart = integration_paths()
     service = config_dir() / 'systemd/user/toughbook-buttons.service'
@@ -438,8 +476,7 @@ def integration(install):
     app_target, _, _ = app_paths()
     install_app()
     script = app_target / 'toughbook-buttons.py'
-    autostart.parent.mkdir(parents=True, exist_ok=True)
-    autostart.write_text((app_target/'data/org.toughbook.Buttons-autostart.desktop').read_text())
+    write_autostart(script)
     service.parent.mkdir(parents=True, exist_ok=True)
     service_command = '/usr/bin/python3 ' + exec_quote(script, systemd=True)
     service.write_text((app_target/'data/toughbook-buttons.service.in').read_text().replace('@SERVICE_EXEC@', service_command))
@@ -448,13 +485,13 @@ def integration(install):
     if target.exists() and target != app_target:
         shutil.rmtree(target)
     subprocess.run(['systemctl', '--user', 'daemon-reload'], check=True)
-    subprocess.run(['systemctl', '--user', 'restart', 'toughbook-buttons.service'], check=True)
+    start_session()
     print('Installed the Toughbook Tools helper and login autostart.')
 
 
 def status():
     path = state_dir() / 'buttons-session.json'
-    return {'driver_devices': devices(), 'portal': portal_status(), 'preferred_shortcuts': TRIGGERS, 'assignments': load_settings(),
+    return {'driver_devices': devices(), 'backend': helper_backend(), 'portal': portal_status(), 'preferred_shortcuts': TRIGGERS, 'assignments': load_settings(),
             'session': json.loads(path.read_text()) if path.exists() else {'error': 'Helper has not started'}}
 
 
@@ -464,20 +501,25 @@ def gui():
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description='Configure Panasonic CF-19 tablet buttons on Wayland')
+    parser = argparse.ArgumentParser(description='Configure Panasonic CF-19 tablet buttons on graphical Linux desktops')
     group = parser.add_mutually_exclusive_group()
-    for mode in ('status', 'monitor', 'daemon', 'install', 'uninstall'):
+    for mode in ('status', 'monitor', 'daemon', 'install', 'uninstall', 'start-session'):
         group.add_argument('--' + mode, action='store_true')
+    parser.add_argument('--backend', choices=('direct', 'portal'), help='Button delivery backend (default: saved choice or direct)')
     args = parser.parse_args(argv)
     try:
         desktop_user()
         if args.status:
             print(json.dumps(status(), indent=2))
+        elif args.start_session:
+            start_session()
         elif args.monitor:
             monitor()
         elif args.daemon:
-            daemon()
+            daemon(args.backend)
         elif args.install or args.uninstall:
+            if args.install and args.backend:
+                save_backend(args.backend)
             integration(args.install)
         else:
             return gui()

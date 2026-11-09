@@ -193,7 +193,7 @@ class ScreenTransactionTests(TemporaryState):
         common.save_json(path, {'kind':'screen','backend':'gnome','identity':IDENTITY,
                                'previous':{'rule':None},'matrix':affine.IDENTITY,'status':'candidate','size':[1024,768]})
         calls = []
-        def install(content, device):
+        def install(content, device, privilege='sudo'):
             calls.append(content)
             if content is not None:
                 raise common.ToolError('reload failed')

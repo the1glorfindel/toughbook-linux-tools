@@ -1,152 +1,150 @@
 # Finger-touch calibration: issue and solution
 
-## What was observed
+On the reference CF-19 Mk6, the Wacom driver already exposed separate finger and
+pen devices. Finger taps registered but missed their targets. A per-device affine
+correction restored accurate finger input; this does not establish a universal
+sensor defect or justify copying another laptop's coefficients. Only the Wacom
+`056a:0093` finger interface `01` is selected. Pen devices are left unchanged.
 
-On the tested CF-19 Mk6, Linux already loaded the Wacom driver and exposed separate
-`Wacom ISDv4 93 Finger` and pen devices. Finger taps registered, but landed away
-from the intended point. The default calibration was the identity transform;
-measured taps showed scale and offset errors across the built-in 1024×768 panel.
-A per-device affine correction restored accurate finger input.
+## Measurement
 
-This establishes a coordinate-mapping mismatch on the tested machine. It does
-not establish a defective sensor, a missing kernel driver, or a Fedora-wide bug.
-The active pen has its own coordinate stream and is deliberately left unchanged.
-Never copy another laptop's calibration coefficients as a universal fix.
+The fullscreen window presents nine targets at 12%, 50% and 88% of each screen
+axis. It waits for stable fullscreen geometry before accepting samples. The Qt
+page receives native touchscreen events; the standalone Tk CLI receives finger
+pointer emulation (through XWayland in a Wayland session).
 
-## How measurement works
-
-The fullscreen window places nine targets on a 3×3 grid, at 12%, 50%, and 88% of
-each dimension. The standalone CLI receives finger taps through XWayland's pointer emulation
-using Tk; the KDE Qt page receives native touchscreen events. The window must first match the active internal display's dimensions
-and remain stable for several checks. Sampling starts only then; resizing during
-measurement clears the samples. A resize during the KDE preview cancels it.
-
-The implementation fits a least-squares affine correction in normalized screen
-coordinates:
+Use only the internal screen at the origin, at 100% scale in normal landscape.
+Do not rotate/change layout during measurement or preview. The fit solves:
 
 ```text
 x_corrected = a*x_measured + b*y_measured + c
 y_corrected = d*x_measured + e*y_measured + f
 ```
 
-This corrects translation, scale, and small cross-axis skew. It rejects nonfinite,
-singular, reversed-axis, or inconsistent samples (maximum fitting residual above
-20 pixels). The residual measures consistency of the fit, not independent proof
-of touch accuracy. A user preview or a fresh verification pass is still required.
-The correction is composed with the current calibration, so repeat calibration
-does not throw away a preexisting transform.
+It rejects nonfinite/singular/reversed samples and maximum fitting residual above
+20 pixels. Residual measures fit consistency, not independent accuracy; check
+edges and corners in preview or verify actual taps after login. The correction
+is composed with the current transform so repeat calibration preserves existing
+correction.
 
-The original prototype had two implementation errors: it measured the window
-before fullscreen had settled, and placed translations in the wrong matrix
-column. These were tool bugs, not causes of the laptop's original touch offset.
-The released implementation explicitly checks geometry and matrix format.
+## Setup and use
 
-## Run calibration
-
-On Fedora KDE install the tools used for measurement and display discovery:
+Install [Linux dependencies](linux.md), then use the Touchscreen page or CLI:
 
 ```sh
-sudo dnf install python3 python3-tkinter python3-dbus xorg-x11-server-Xwayland systemd-udev libkscreen
+python3 tools/setup-linux.py
 python3 calibrate-screen.py --status
 python3 calibrate-screen.py
 ```
 
-On Debian/Ubuntu, Fedora or Arch-based systems, run
-`python3 tools/setup-linux.py` from the repository root to install the appropriate
-Tk, XWayland, D-Bus, udev and KDE screen-helper packages. See [Linux setup](linux.md).
-The Qt calibration page supports KDE only; on GNOME use this standalone CLI.
+Desktop names do not gate calibration. The active session selects KWin live
+calibration, native X11 calibration, or a persistent libinput rule. The Qt page
+supports all three paths. Native Qt display discovery is used for generic
+sessions, and rejects unknown/synthetic connectors, multiple outputs, scaling
+and unexpected geometry. On Debian installations with a private PySide6 venv,
+the standalone tool can use that installed interpreter for display discovery.
 
-Use only the internal display, at 100% scale and normal landscape orientation.
-On GNOME, install the same base packages without `libkscreen`; run from the
-logged-in desktop session. Enter saves a candidate and prints the exact
-`--apply BACKUP` command. Only that explicit apply step uses sudo. Log out/in,
-then run the printed `--verify BACKUP` command. See the GNOME backend section
-below before using its experimental workflow.
+## KWin live calibration
 
-## KDE Wayland backend
+The existing hardware-tested path uses KScreen's current layout and KWin's live
+per-device calibration/output properties. The affine transform occupies the
+top-left 3×3 portion of KWin's serialized 4×4 matrix; translations are in the
+third column. The implementation writes and reads back the matrix.
 
-Display discovery uses `kscreen-doctor -j`. Device identity comes from udev;
-KWin's `org.kde.KWin.InputDevice` D-Bus properties provide the live matrix and
-output mapping. The six affine coefficients occupy the top-left 3×3 portion of
-KWin's serialized 4×4 matrix:
+Accept after testing finger accuracy. Escape, close, resized geometry or an error
+requests restoration of the previous matrix and output assignment. Accepted
+settings are persisted by KWin. Backup identity resolves the current event node,
+so restoration does not depend on an old `/dev/input/eventN` number.
 
-```text
-a b c 0
-d e f 0
-0 0 1 0
-0 0 0 1
+## Native X11 calibration
+
+On any native X11 desktop/window manager, the tool resolves the finger device by
+matching XInput's `Device Node` to the discovered finger event. It changes only
+that device's Coordinate Transformation Matrix, reads it back, and previews it.
+It never uses XInput against XWayland. Pen/ordinary keyboard devices are excluded.
+
+Accepting stores a per-user activation record at
+`$XDG_CONFIG_HOME/toughbook-tools/x11-calibration.json` and an XDG autostart entry.
+It uses the installed app copy when available. Cancellation/save failure restores
+the previous live matrix and activation record. Restore also reinstates/removes
+the previous activation record. For window managers without XDG autostart, run
+`python3 calibrate-screen.py --activate` after X startup. Activation refuses a
+changed display layout; return to the original normal layout first.
+
+The Rotation button's X11 backend composes output orientation with the existing
+finger transform and attempts to restore both if a change fails. New X11 paths
+have automated coverage; physical acceptance remains pending.
+
+## Common libinput Wayland calibration
+
+Other libinput-based Wayland compositors, including GNOME, use the same narrow
+udev rule. A running Mutter interface can supply display layout; other compositors
+use native Qt. Measuring/saving a candidate does not change live input.
+
+In the GUI, save the candidate, select it below, choose **Apply candidate**, approve
+the administrator prompt, log out/in and use **Verify after login**. GUI
+verification uses native Qt and does not require XWayland. The CLI prints
+the equivalent commands:
+
+```sh
+python3 calibrate-screen.py --apply BACKUP
+# Log out and back in, then:
+python3 calibrate-screen.py --verify BACKUP
+# Or use native Qt targets without XWayland:
+python3 calibrate-screen.py --verify BACKUP --qt
 ```
 
-In particular, translation belongs in the **third column**, not the fourth.
-The tool sets the detected internal output, writes the matrix, and reads it back.
-KWin persists accepted settings in the user's input configuration. Enter accepts;
-Escape, closing the window, or an application error restores the previous matrix
-and output mapping. Backups record stable hardware identity so restore resolves
-the current event device instead of relying on an old `/dev/input/eventN` number.
-
-## GNOME Wayland backend — experimental
-
-GNOME's touchscreen GSettings schema offers output mapping, not an equivalent
-public calibration-matrix setting. This backend therefore uses libinput's
-`LIBINPUT_CALIBRATION_MATRIX` udev property. It stores six normalized coefficients,
-composed with the existing property, in:
+The rule sets `LIBINPUT_CALIBRATION_MATRIX` in:
 
 ```text
 /etc/udev/rules.d/99-toughbook-fedora-touchscreen.rules
 ```
 
-The rule matches vendor/product `056a:0093`, finger USB interface `01`, touchscreen
-classification, serial, and the internal USB path. It does not match the pen
-interface or all input devices. Only the explicit `--apply BACKUP` operation uses
-sudo to install the generated file, reload rules, and refresh the selected event.
-The GUI itself never runs as root. An existing tool rule is backed up before
-replacement; if it changes after measurement, installation stops.
+The historical filename is retained for recovery compatibility. Matching includes
+the vendor/product, touchscreen classification, finger USB interface, serial and
+internal USB path. No broad input-device rule is generated. A prior rule is backed
+up verbatim, and applying refuses if that rule changed since measurement.
 
-Libinput reads this static property when adding the device to a context. Updating
-the udev database alone does not guarantee that a running GNOME session rereads
-it, hence the required logout/login. Verification checks the new shell-session
-identity, expected udev matrix, and another nine-point set of actual taps. It
-reports failure rather than calling an unverified candidate successful. Restore
-uses the prior rule contents, or removes the tool's rule if none existed, and
-requires another logout/login.
+Libinput reads this default when creating a device. Reloading udev alone does
+not prove that the running compositor re-read it, so verification requires a new
+login, expected udev matrix and another actual nine-point measurement. It reports
+success only after those checks and acceptance. Generic login identity comes from
+logind; ambiguous/unavailable sessions are refused. GNOME retains its existing
+shell-session identity compatibility for older backups.
 
-This path is implemented and covered by simulations, but has **not** been tested
-on physical CF-19 hardware running GNOME. GNOME support remains experimental in this release.
-For v1, keep one internal display active, at 100% scale in normal landscape.
-Rotation, fractional scaling, and multiple active monitors need separate validation.
-Do not assume a GNOME system rule replaces a previously saved KWin user matrix
-when switching desktop sessions; calibrate/restore using the appropriate backend.
+A compositor may override libinput defaults. Remove/restore any conflicting
+per-compositor transform before using this path. Restore an old KWin-specific
+matrix before switching to a common rule to avoid applying two corrections.
+Physical validation on additional compositors remains pending.
 
-## Troubleshooting
+## Recovery and troubleshooting
 
-- **No eligible finger device appears:** run `python3 calibrate-screen.py --status`.
-  Confirm the Wacom `056a:0093` finger interface is present; the pen interface is
-  intentionally excluded. Install the dependencies in the README and check that
-  `systemd-udev` can query input devices. Do not substitute another event device.
-- **The tool refuses the display layout:** disconnect/disable external displays,
-  restore normal landscape orientation, and set scale to 100%. Run `--status`
-  again to confirm the internal panel is the only active output.
-- **Targets move, taps are rejected, or the fit looks wrong:** wait until the
-  fullscreen window settles, tap each target deliberately with a finger, and do
-  not resize or rotate during measurement. A passive stylus may work, but the
-  active Wacom pen is not the calibrated device. If the fit still fails, cancel
-  and retry; the residual threshold is not an accuracy guarantee.
-- **KDE preview is inaccurate or apply fails:** Escape or close the preview to
-  restore the previous matrix. Re-run calibration and accept only after checking
-  edges and corners. If the session is interrupted, use the exact backup path
-  printed by the tool with `python3 calibrate-screen.py --restore BACKUP`.
-- **GNOME verification fails:** first complete the apply command printed after
-  measurement, then log out and back in. Keep display layout unchanged and run
-  the printed `--verify BACKUP` command in the new session. A failed verification
-  retains recovery data; use `--restore BACKUP`, then log out/in again. Applying
-  the same candidate in the old session cannot validate the new udev property.
-- **Restore reports an error:** run it as the same desktop user and with the same
-  `XDG_CONFIG_HOME`. On GNOME, a restored rule takes effect after logout/login.
-  Preserve the backup until the live matrix/output or new-session taps are
-  confirmed.
+All paths retain a JSON backup in the tool's private state directory. Use the
+GUI's **Restore selected backup** or:
 
-## Sources
+```sh
+python3 calibrate-screen.py --restore BACKUP
+```
 
-- [KWin device properties and matrix implementation](https://github.com/KDE/kwin/blob/master/src/backends/libinput/device.cpp)
-- [libinput static configuration through udev](https://wayland.freedesktop.org/libinput/doc/latest/device-configuration-via-udev.html)
-- [GNOME peripheral schemas](https://github.com/GNOME/gsettings-desktop-schemas/blob/master/schemas/org.gnome.desktop.peripherals.gschema.xml.in)
+KWin/X11 restore the previous live matrix. Libinput restores the old rule or
+removes the tool's rule, then requires logout/login. Preserve backups until
+accuracy is confirmed. Run as the original desktop user; system-rule changes
+request administrator authorization separately. The GUI uses graphical polkit
+authorization; the terminal CLI uses sudo.
+
+- **No sensor:** inspect `--status` and the exact finger USB interface; never
+  substitute the pen or guess an event node.
+- **Layout refused:** disable external displays, use 100% scale at the origin,
+  and return to normal landscape. Generic discovery must run against the native
+  display connection. Install Qt's native Wayland plugin where required.
+- **Inaccurate preview:** cancel and retry with deliberate finger taps. A good
+  fit residual alone does not prove touch accuracy.
+- **Verification refused:** log out/in after applying, confirm the expected udev
+  matrix and unchanged geometry, then retry. Restore if actual taps still miss.
+- **Session interrupted:** keep the printed backup and explicitly restore it;
+  abrupt process termination cannot guarantee live rollback.
+
+See [desktop compatibility](desktops.md) and [validation status](VALIDATION.md).
+Sources: [KWin device implementation](https://github.com/KDE/kwin/blob/master/src/backends/libinput/device.cpp),
+[libinput udev defaults](https://wayland.freedesktop.org/libinput/doc/latest/device-configuration-via-udev.html),
+[XInput](https://www.x.org/releases/current/doc/man/man1/xinput.1.xhtml).

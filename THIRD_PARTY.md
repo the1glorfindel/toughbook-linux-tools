@@ -14,7 +14,7 @@ license information before redistributing generated configurations. They are
 runtime state and are excluded from the release archive.
 
 Python, PySide6/Qt6, Tk, dbus-python, PipeWire, WirePlumber, ALSA, libkscreen,
-XWayland, systemd-udev, polkit, and sudo are separate system dependencies under
+XWayland, XInput/XRandR, wlr-randr, systemd-udev, polkit, and sudo are separate system dependencies under
 their own licenses.
 This archive does not distribute them. Links to their relevant implementation
 and configuration documentation appear in the issue explanations.

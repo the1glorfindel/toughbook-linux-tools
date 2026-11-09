@@ -11,13 +11,12 @@ from toughbook.common import ToolError
 
 
 class BackendTests(unittest.TestCase):
-    def test_requires_wayland_and_known_desktop(self):
-        with patch.dict(os.environ, {'XDG_SESSION_TYPE': 'x11', 'XDG_CURRENT_DESKTOP': 'KDE'}):
-            with self.assertRaises(ToolError):
-                desktop.backend_name()
-        with patch.dict(os.environ, {'XDG_SESSION_TYPE': 'wayland', 'XDG_CURRENT_DESKTOP': 'XFCE'}):
-            with self.assertRaises(ToolError):
-                desktop.backend_name()
+    def test_accepts_x11_and_unknown_wayland_desktops(self):
+        with patch.dict(os.environ, {'XDG_SESSION_TYPE': 'x11', 'XDG_CURRENT_DESKTOP': 'XFCE'}):
+            self.assertEqual(desktop.backend_name(), 'x11')
+        with patch.dict(os.environ, {'XDG_SESSION_TYPE': 'wayland', 'XDG_CURRENT_DESKTOP': 'sway'}), \
+             patch.dict('sys.modules', {'dbus': None}):
+            self.assertEqual(desktop.backend_name(), 'libinput')
 
     def test_unknown_action_rejected(self):
         with self.assertRaises(ToolError):
@@ -51,7 +50,9 @@ class BackendTests(unittest.TestCase):
         props.Set.assert_called_once_with('org.kde.kwin.VirtualKeyboard', 'active', False, timeout=10)
 
         props.Get.side_effect = [False]
-        with patch.object(desktop, 'dbus_module', return_value=dbus), self.assertRaises(ToolError):
+        with patch.object(desktop, 'dbus_module', return_value=dbus), \
+             patch.object(desktop, '_portable_keyboard', side_effect=ToolError('No provider')), \
+             self.assertRaises(ToolError):
             desktop._keyboard('kde')
 
     def test_kde_launcher(self):

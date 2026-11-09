@@ -36,7 +36,7 @@ def desktop_id(value=None):
         return 'kde'
     if 'gnome' in value:
         return 'gnome'
-    raise ToolError('Choose --desktop kde or --desktop gnome, or run setup from that desktop session.')
+    return 'generic'
 
 
 def package_available(package):
@@ -48,40 +48,53 @@ def package_available(package):
 
 def app_packages(distro, desktop, available=None):
     """Return (packages, needs_PySide_venv); no installation or session changes."""
-    if desktop not in ('kde', 'gnome'):
-        raise ToolError('Supported desktops are KDE and GNOME Wayland.')
-    portal = 'xdg-desktop-portal-' + desktop
+    if desktop not in ('kde', 'gnome', 'generic'):
+        raise ToolError('Choose kde, gnome or generic dependencies.')
+    portal = 'xdg-desktop-portal-' + (desktop if desktop != 'generic' else 'gtk')
     if distro in ('debian', 'ubuntu'):
         available = available or package_available
         packages = ['python3', 'python3-venv', 'python3-pip', 'python3-dbus', 'python3-gi',
-                    'python3-tk', 'xwayland', 'pipewire-bin', 'wireplumber', 'pulseaudio-utils',
+                    'python3-tk', 'xwayland', 'xinput', 'x11-xserver-utils', 'pipewire-bin', 'wireplumber', 'pulseaudio-utils',
                     'alsa-utils', 'udev', 'systemd', 'dbus-user-session', 'libglib2.0-bin', 'xdg-desktop-portal', portal,
                     'pkexec', 'sudo', 'kmod']
         venv = not available('python3-pyside6.qtwidgets')
         if not venv:
             packages += ['python3-pyside6.qtwidgets', 'qt6-wayland']
+        else:
+            # Wheels bundle Qt, but not its native XCB/graphics dependencies.
+            # Minimal X11 desktops need these even when no distro Qt is installed.
+            packages += ['libegl1', 'libgl1', 'libfontconfig1', 'libdbus-1-3',
+                         'libx11-xcb1', 'libxkbcommon-x11-0', 'libxcb-cursor0',
+                         'libxcb-icccm4', 'libxcb-image0', 'libxcb-keysyms1',
+                         'libxcb-render-util0', 'libxcb-xinerama0', 'libxcb-xkb1',
+                         'libxcb-randr0', 'libxcb-shape0', 'libxcb-shm0',
+                         'libxcb-sync1', 'libxcb-xfixes0']
         if desktop == 'kde':
             screen = next((p for p in ('libkscreen-bin', 'libkf5screen-bin') if available(p)), None)
             if screen is None:
                 raise ToolError('No KDE screen helper package is available. Enable the distribution '
                                 'repository providing kscreen-doctor and retry.')
             packages.append(screen)
+        if desktop == 'generic':
+            packages.append('wlr-randr')
         return packages, venv
     if distro == 'fedora':
         packages = ['python3', 'python3-pyside6', 'qt6-qtwayland', 'python3-dbus',
-                    'python3-gobject', 'python3-tkinter', 'xorg-x11-server-Xwayland',
+                    'python3-gobject', 'python3-tkinter', 'xorg-x11-server-Xwayland', 'xinput', 'xrandr',
                     'pipewire-utils', 'pipewire-libs', 'wireplumber', 'pulseaudio-utils',
                     'alsa-utils', 'systemd', 'systemd-udev', 'dbus', 'glib2', 'polkit', 'sudo', 'kmod',
                     'xdg-desktop-portal', portal]
     elif distro == 'arch':
         packages = ['python', 'pyside6', 'qt6-wayland', 'python-dbus', 'python-gobject',
-                    'tk', 'xorg-xwayland', 'pipewire', 'pipewire-audio', 'alsa-card-profiles',
+                    'tk', 'xorg-xwayland', 'xorg-xinput', 'xorg-xrandr', 'pipewire', 'pipewire-audio', 'alsa-card-profiles',
                     'wireplumber', 'libpulse', 'alsa-utils', 'systemd', 'dbus', 'glib2', 'polkit',
                     'sudo', 'kmod', 'xdg-desktop-portal', portal]
     else:
         raise ToolError(f'Unsupported package family: {distro}')
     if desktop == 'kde':
         packages.append('libkscreen')
+    if desktop == 'generic':
+        packages.append('wlr-randr')
     return packages, False
 
 

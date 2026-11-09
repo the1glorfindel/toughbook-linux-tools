@@ -31,15 +31,18 @@ class DistroTests(unittest.TestCase):
                 with self.assertRaises(ToolError):
                     distro.distro_id(path)
 
-    def test_desktop_detection_and_explicit_rejection(self):
+    def test_desktop_detection_defaults_to_generic(self):
         for value, expected in [('ubuntu:GNOME', 'gnome'), ('KDE', 'kde'), ('plasma', 'kde')]:
             self.assertEqual(distro.desktop_id(value), expected)
-        with self.assertRaises(ToolError):
-            distro.desktop_id('XFCE')
+        self.assertEqual(distro.desktop_id('XFCE'), 'generic')
+        self.assertEqual(distro.desktop_id('sway'), 'generic')
+        self.assertEqual(distro.desktop_id(''), 'generic')
 
     def test_debian_pyside_and_kde_package_fallback(self):
         packages, venv = distro.app_packages('debian', 'kde', available=lambda p: p == 'libkf5screen-bin')
         self.assertTrue(venv)
+        self.assertIn('libxcb-cursor0', packages)
+        self.assertIn('libxkbcommon-x11-0', packages)
         self.assertIn('libkf5screen-bin', packages)
         self.assertNotIn('python3-pyside6.qtwidgets', packages)
         packages, venv = distro.app_packages('debian', 'kde', available=lambda p: True)

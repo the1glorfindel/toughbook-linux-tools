@@ -168,3 +168,62 @@ The isolated Python 3.14 / PySide6 6.12 offscreen suite passes, including archiv
 reproducibility, CLI help, portable C decoder and cross-distribution setup tests.
 GUI test teardown now explicitly disposes of widgets before QApplication exits;
 this addresses an intermittent shutdown crash also observed on the unchanged suite.
+
+## Desktop-independent backends (unreleased)
+
+The desktop-name allowlists have been removed. New automated coverage exercises
+capability detection, generic setup dependencies, native XInput finger-only
+matching, X11 calibration/persistence and rollback, non-GNOME libinput apply and
+restore, direct F13–F16 delivery, partial/dropped packets, repeat suppression,
+inactive/locked-session gating, provider fallbacks and XRandR/wlroots recovery.
+Generic GUI candidates require explicit application and new-login verification;
+writing a candidate alone is not reported as an accepted calibration.
+
+Physical acceptance on native X11 and additional Wayland compositors remains
+pending. Test dedicated-device ACL revocation/VT switching, lock/unlock, reconnect,
+suspend/resume and login persistence on each target session. Confirm rotation
+preserves finger alignment and unavailable provider protocols fail clearly.
+Keep the existing Fedora/KDE evidence separate from these new simulated paths.
+
+The added XInput/XRandR, generic portal and wlr-randr package names were checked
+against official Debian 12/13, Arch core/extra and Fedora 44 repository metadata.
+No system packages, driver state or live display/audio/input configuration were
+changed. Run the full suite with Qt's offscreen platform as in the development
+guide; physical desktop acceptance remains a separate step.
+
+## Xorg/X11 and Wayland compatibility verification
+
+Native client checks passed on 2026-11-09 using isolated servers on the Fedora 44
+diagnostic host with Python 3.14 and PySide6/Qt 6.12. These are stronger than offscreen mocks,
+but do not establish physical CF-19 hardware acceptance.
+
+| Check | X11: Xvfb 21.1.25 + Openbox 3.6.1 | Wayland: headless Weston 15.0.1 |
+| --- | --- | --- |
+| Native Qt platform | `xcb` passed | `wayland` passed; XWayland disabled |
+| Native output metadata | 1024×768, scale 1 passed | 1024×768, scale 1 passed |
+| Fullscreen target readiness | Passed | Passed |
+| Nine synthetic touchscreen taps, coordinates within one pixel, preview acceptance | Passed | Passed |
+| All four GUI pages and clean shutdown | Passed | Passed |
+| Real XInput matrix apply/read-back/restore | Passed on Xvfb synthetic pointer; unrelated keyboard unchanged | Explicitly rejected before any XInput query |
+| 180° output metadata | Not exercised on Xvfb | Correctly reported non-normal |
+| Full automated suite with explicit session type | 125 tests passed | 125 tests passed |
+
+The added protocol checks cover conflicting/stale display variables, absent
+sessions, refusal to use XInput on Wayland, and rejection of reused XInput IDs or
+changed event-node identities before writing a matrix. Source-archive content,
+reproducibility and extracted CLI help checks also pass.
+
+`tools/check-display.py` preserves the native smoke check. It redirects app
+configuration/state and D-Bus to temporary locations, opens native GUI windows,
+and prints a JSON report. `--xvfb-input` modifies only an explicitly identified
+Xvfb synthetic pointer inside the temporary server. No real event node, udev rule,
+module, sound setting or system package was changed by this verification.
+See [development instructions](development.md) to repeat the checks.
+
+X11 fullscreen calibration requires a window manager honoring fullscreen requests;
+a bare Xvfb server kept the default 640×480 dialog and was correctly refused.
+The X11 pass above uses Openbox. Virtual output names (`screen`, `headless`) are
+not mistaken for eligible internal hardware by the calibration layout guard.
+Actual touch accuracy, ALSA/speaker behavior, real display rotation with finger
+alignment, direct-device ACL/lock/VT behavior, suspend and login persistence on
+CF-19 hardware still require the physical acceptance checklist on both protocols.

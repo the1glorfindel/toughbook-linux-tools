@@ -21,7 +21,7 @@ def execute(argv):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--desktop', choices=('kde', 'gnome'), help='Override desktop detection')
+    parser.add_argument('--desktop', choices=('kde', 'gnome', 'generic'), help='Override desktop detection')
     parser.add_argument('--dry-run', action='store_true', help='Print a JSON plan without installing or changing files')
     parser.add_argument('--driver-prerequisites', action='store_true',
                         help='Also install build tools and running-kernel headers; never install/load the driver')

@@ -1,5 +1,5 @@
 [Unit]
-Description=Toughbook tablet shortcut portal session
+Description=Toughbook dedicated tablet-button helper
 After=graphical-session.target
 PartOf=graphical-session.target
 

@@ -1,6 +1,18 @@
 # Changelog
 
-## Unreleased — general Linux preparation
+## Unreleased — desktop-independent fixes
+
+- Verify native X11/Wayland Qt clients, synthetic touch sampling, GUI shutdown and XInput read-back.
+- Add a repeatable display smoke check and reject XInput calls on Wayland or reused device identities.
+
+- Detect active compositor capabilities instead of rejecting other desktop names.
+- Add native X11 finger calibration/persistence and a common libinput Wayland GUI workflow.
+- Default to dedicated-device button input with active/unlocked-session checks; retain optional portals.
+- Add generic launcher/keyboard providers, XRandR touch-aware rotation and wlroots output rotation.
+- Import session environment at helper startup and document window-manager startup commands.
+- Extend generic setup packages, rollback tests and desktop compatibility guidance.
+
+### General Linux preparation
 
 - Share setup and dependency selection across Debian/Ubuntu, Fedora and Arch families.
 - Add native Pacman commands, kernel-pkgbase header selection and desktop portal packages.
