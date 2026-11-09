@@ -12,7 +12,8 @@ def collect(analysis, root, work):
     work.mkdir(parents=True, exist_ok=True)
     source_files = {str(Path(row[1]).resolve()) for row in analysis.binaries if Path(row[1]).is_file()}
     # Include the providers of copied configuration files and WAV samples too.
-    source_files.update(str(path) for pattern in ('/usr/share/alsa/alsa.conf', '/usr/share/sounds/alsa/*.wav')
+    source_files.update(str(path) for pattern in ('/usr/share/alsa/alsa.conf', '/usr/share/sounds/alsa/*.wav',
+                                                 '/usr/share/fonts/truetype/dejavu/*.ttf')
                         for path in Path('/').glob(pattern.lstrip('/')) if path.is_file())
     for source in list(source_files):
         for prefix in ('/usr/lib/', '/usr/bin/', '/usr/sbin/'):

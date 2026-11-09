@@ -20,7 +20,7 @@ def release_files(root=ROOT):
     result = [root/name for name in TOP]
     for folder, suffix in [('toughbook','.py'), ('tests','.py'), ('tools','.py'), ('tools','.sh'), ('docs','.md')]:
         result += [p for p in (root/folder).rglob('*'+suffix) if '__pycache__' not in p.parts]
-    result += [root/'bundle'/name for name in ('Containerfile', 'requirements.txt', 'freeze.py', 'metadata.py', 'sources.py', 'build.py', 'toughbook.spec')]
+    result += [root/'bundle'/name for name in ('Containerfile', 'requirements.txt', 'freeze.py', 'metadata.py', 'sources.py', 'build.py', 'toughbook.spec', 'fonts.conf')]
     result += [root/'data'/name for name in ('org.toughbook.Tools.desktop.in', 'org.toughbook.Tools.svg', 'org.toughbook.Buttons.desktop.in',
         'org.toughbook.Buttons-autostart.desktop', 'toughbook-buttons.service.in')]
     driver_names = {'panasonic-hbtn.c', 'hbtn-decode.h', 'Makefile', 'dkms.conf',

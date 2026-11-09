@@ -67,7 +67,8 @@ def initialize():
     values = {'PATH': str(root / 'bin') + os.pathsep + host_path}
     for name, relative in (('ALSA_CONFIG_DIR', 'alsa'), ('ALSA_CONFIG_PATH', 'alsa/alsa.conf'),
                            ('ALSA_PLUGIN_DIR', 'alsa-lib'), ('PIPEWIRE_MODULE_DIR', 'pipewire-0.3'),
-                           ('SPA_PLUGIN_DIR', 'spa-0.2')):
+                           ('SPA_PLUGIN_DIR', 'spa-0.2'), ('FONTCONFIG_FILE', 'fontconfig/fonts.conf'),
+                           ('FONTCONFIG_PATH', 'fontconfig')):
         if (root / relative).exists():
             values[name] = str(root / relative)
     for name, value in values.items():
@@ -83,7 +84,7 @@ def host_environment(base=None):
     for name in ('LD_LIBRARY_PATH', 'QT_PLUGIN_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH',
                  'GI_TYPELIB_PATH', 'GIO_MODULE_DIR', 'GIO_EXTRA_MODULES',
                  'ALSA_CONFIG_DIR', 'ALSA_CONFIG_PATH', 'ALSA_PLUGIN_DIR',
-                 'PIPEWIRE_MODULE_DIR', 'SPA_PLUGIN_DIR', 'PYTHONHOME', 'PYTHONPATH'):
+                 'PIPEWIRE_MODULE_DIR', 'SPA_PLUGIN_DIR', 'FONTCONFIG_FILE', 'FONTCONFIG_PATH', 'PYTHONHOME', 'PYTHONPATH'):
         env.pop(name, None)
     if env.get('LD_LIBRARY_PATH_ORIG'):
         env['LD_LIBRARY_PATH'] = env['LD_LIBRARY_PATH_ORIG']

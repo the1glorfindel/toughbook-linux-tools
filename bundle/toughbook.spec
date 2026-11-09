@@ -32,6 +32,8 @@ for folder in ('pipewire-0.3', 'spa-0.2', 'alsa-lib'):
 datas = [(str(ROOT/name), name) for name in ('data', 'docs', 'driver')]
 datas += [(str(ROOT/name), '.') for name in ('README.md', 'LICENSE', 'THIRD_PARTY.md', 'CHANGELOG.md')]
 datas += [(str(ROOT/'tools/check-display.py'), 'tools'),
+          (str(ROOT/'bundle/fonts.conf'), 'fontconfig'),
+          ('/usr/share/fonts/truetype/dejavu', 'fonts'),
           ('/usr/share/alsa', 'alsa'), ('/usr/share/sounds/alsa', 'sounds/alsa')]
 
 a = Analysis([str(ROOT/'bundle/freeze.py')], pathex=[str(ROOT)], binaries=binaries, datas=datas,

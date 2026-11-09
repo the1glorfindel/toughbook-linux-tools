@@ -73,7 +73,7 @@ def check_xvfb_input():
 def native_check(args):
     from PySide6 import __version__ as pyside_version
     from PySide6.QtCore import QEvent, QPoint, qVersion
-    from PySide6.QtGui import QInputDevice
+    from PySide6.QtGui import QInputDevice, QFontDatabase
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication
     from toughbook import screen, session
@@ -83,13 +83,16 @@ def native_check(args):
 
     app = QApplication.instance() or QApplication([])
     app.setQuitOnLastWindowClosed(False)
+    families = QFontDatabase.families()
+    if not families:
+        raise RuntimeError('No usable fonts are available for the application interface.')
     expected_platform = 'xcb' if args.expect == 'x11' else 'wayland'
     if session.kind() != args.expect or not app.platformName().startswith(expected_platform):
         raise RuntimeError(f'Expected native {args.expect}/{expected_platform}, got {session.kind()}/{app.platformName()}.')
     outputs = json.loads(command(sys.executable, str(Path(screen.__file__).with_name('display_info.py'))))
     report = {'session': session.kind(), 'qt_platform': app.platformName(),
               'python_version': sys.version.split()[0], 'pyside_version': pyside_version,
-              'qt_version': qVersion(), 'outputs': outputs}
+              'qt_version': qVersion(), 'font_families': len(families), 'outputs': outputs}
     try:
         screen.generic_layout(outputs)
         report['calibration_layout_eligible'] = True

@@ -54,14 +54,20 @@ class RuntimeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             (root/'alsa').mkdir()
+            (root/'fontconfig').mkdir()
+            (root/'fontconfig/fonts.conf').write_text('<fontconfig/>')
             with patch.object(runtime, 'frozen', return_value=True), \
                  patch.object(runtime, 'resources', return_value=root), \
                  patch.object(runtime, '_ORIGINAL', {}), \
-                 patch.dict(os.environ, {'PATH': '/usr/bin', 'ALSA_CONFIG_DIR': '/custom/alsa'}, clear=True):
+                 patch.dict(os.environ, {'PATH': '/usr/bin', 'ALSA_CONFIG_DIR': '/custom/alsa',
+                                          'FONTCONFIG_FILE': '/custom/fonts.conf'}, clear=True):
                 runtime.initialize()
                 self.assertTrue(os.environ['PATH'].startswith(str(root/'bin')))
                 self.assertEqual(runtime.host_environment()['PATH'], '/usr/bin')
                 self.assertEqual(runtime.host_environment()['ALSA_CONFIG_DIR'], '/custom/alsa')
+                self.assertEqual(os.environ['FONTCONFIG_FILE'], str(root/'fontconfig/fonts.conf'))
+                self.assertEqual(runtime.host_environment()['FONTCONFIG_FILE'], '/custom/fonts.conf')
+                self.assertNotIn('FONTCONFIG_PATH', runtime.host_environment())
 
     def test_independent_native_client_launch_reenters_the_portable_runtime(self):
         with patch.object(runtime, 'frozen', return_value=True), \

@@ -4,7 +4,7 @@ The x86_64 portable archive contains the Python interpreter, PySide6/Qt with
 native X11 and Wayland plugins, D-Bus Python bindings, GLib/Gio introspection,
 Tcl/Tk, and the userspace clients used by the fixes: pactl, pw-play, amixer,
 alsactl, xinput, xrandr and wlr-randr. Their required shared libraries, ALSA
-configuration and speaker-test WAV files travel with the app.
+configuration, DejaVu fonts/font configuration and speaker-test WAV files travel with the app.
 
 Extract the archive and run:
 
@@ -33,7 +33,7 @@ The independent tools are available through the same executable:
 
 A portable app cannot supply a running kernel or safely replace the desktop's
 services. The host provides Linux x86_64, glibc 2.36 or newer (Debian 12+, Ubuntu
-24.04+, and current Fedora/Arch), its graphics drivers/fonts and Xorg or Wayland
+24.04+, and current Fedora/Arch), its graphics drivers and Xorg or Wayland
 session. Audio repair needs the host's running PipeWire/Pulse compatibility
 server, WirePlumber and its matching ACP profiles. Per-user configuration is
 still generated from those host profiles, so it matches the running audio stack.
