@@ -1,5 +1,6 @@
 """Per-user Toughbook Tools app installation. SPDX-License-Identifier: MIT"""
 import os
+import importlib
 from pathlib import Path
 import shutil
 import subprocess
@@ -11,6 +12,33 @@ from .common import ToolError, config_dir, desktop_user
 
 
 APP_ID = 'org.toughbook.Tools'
+
+
+GUI_IMPORTS = ('PySide6.QtCore', 'PySide6.QtGui', 'PySide6.QtWidgets',
+               'dbus', 'gi.repository.Gio', 'gi.repository.GLib')
+
+
+def source_interpreter():
+    """Keep a working source interpreter or use setup's managed environment."""
+    try:
+        for module in GUI_IMPORTS:
+            importlib.import_module(module)
+        return sys.executable
+    except (ImportError, OSError):
+        pass
+    data = Path(os.environ.get('XDG_DATA_HOME') or Path.home() / '.local/share')
+    candidate = data / 'toughbook-tools-python/bin/python'
+    if candidate.is_file():
+        probe = '; '.join('import ' + module for module in GUI_IMPORTS)
+        try:
+            result = subprocess.run([str(candidate), '-c', probe], capture_output=True,
+                                    text=True, timeout=20)
+            if result.returncode == 0:
+                return str(candidate)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+    raise ToolError('No Python interpreter with the GUI dependencies is available. '
+                    'Run python3 tools/setup-linux.py, then retry installation.')
 
 
 def paths():
@@ -27,6 +55,14 @@ def icon_path():
 def install_app(page='overview'):
     """Install/update the complete source tree and unified launcher for this user."""
     desktop_user()
+    if not runtime.frozen():
+        interpreter = source_interpreter()
+        if interpreter != sys.executable:
+            # Reenter before stopping services or replacing files so every
+            # installed launcher and activation command records this interpreter.
+            subprocess.run([interpreter, str(runtime.application_root() / 'toughbook-tools.py'),
+                            '--install', '--page', page], check=True)
+            return paths()[0]
     target, launcher, old_launcher = paths()
     root = runtime.application_root()
     target.parent.mkdir(parents=True, exist_ok=True)
