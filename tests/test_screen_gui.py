@@ -4,7 +4,7 @@ from unittest.mock import patch
 from pathlib import Path
 import tempfile
 
-from PySide6.QtCore import QEvent, QEventLoop, QTimer
+from PySide6.QtCore import QEvent, QEventLoop, QTimer, Qt
 from PySide6.QtWidgets import QApplication
 
 from toughbook.affine import TARGETS
@@ -17,6 +17,20 @@ APP = QApplication.instance() or QApplication([])
 
 
 class TargetTests(unittest.TestCase):
+    def test_targets_use_normal_window_type_even_when_parented(self):
+        from PySide6.QtWidgets import QWidget
+        parent = QWidget()
+        with patch.object(_Targets, 'showFullScreen'):
+            dialog = _Targets((1024, 768), parent)
+        try:
+            self.assertTrue(dialog.isWindow())
+            self.assertEqual(dialog.windowType(), Qt.WindowType.Window)
+            self.assertIs(dialog.parentWidget(), parent)
+        finally:
+            dialog.finish()
+            dialog.deleteLater()
+            parent.deleteLater()
+
     def tearDown(self):
         APP.sendPostedEvents(None, QEvent.DeferredDelete)
         APP.processEvents()

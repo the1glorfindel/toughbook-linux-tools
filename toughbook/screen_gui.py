@@ -34,7 +34,9 @@ class _Targets(QDialog):
     cancelled = Signal()
 
     def __init__(self, expected, parent=None):
-        super().__init__(parent)
+        # Mutter on X11 refuses fullscreen for a dialog-type window. Keep
+        # QDialog's lifetime/event handling with a normal top-level window type.
+        super().__init__(parent, Qt.WindowType.Window)
         self.expected = tuple(expected)
         self.samples = []
         self.ready = False
