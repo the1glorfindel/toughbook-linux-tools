@@ -6,6 +6,9 @@ source, scripts, and the optional driver together; it does not start the
 optional button helper. See the project README for launcher status and page
 selection options.
 
+The [portable runtime](portable.md) includes Python/Qt and the native clients;
+its launcher is `./toughbook-tools` with the same application options.
+
 ## Issue and feature guides
 
 - [Desktop compatibility](desktops.md): common Wayland/X11 calibration, direct

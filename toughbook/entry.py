@@ -75,7 +75,7 @@ def _main(argv):
         tool, argv = argv[1], argv[2:]
     elif argv and Path(argv[0]).name in runtime.TOOLS:
         tool, argv = runtime.TOOLS[Path(argv[0]).name], argv[1:]
-    sys.argv = [sys.executable, *argv]
+    sys.argv = [sys.executable if runtime.frozen() else sys.argv[0], *argv]
     if tool == 'app':
         from .app import main
         return main(argv)

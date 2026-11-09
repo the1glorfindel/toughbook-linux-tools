@@ -16,7 +16,20 @@ Other CF-19 revisions, the active Wacom pen, other touch controllers, and
 other audio codecs are outside the tested scope. The detailed
 [documentation index](docs/README.md) explains each issue and its recovery path.
 
-## Quick start: Toughbook Tools GUI
+## Portable app (no Python installation)
+
+The portable x86_64 package includes Python, Qt, D-Bus bindings and the native
+command-line utilities used by the fixes. Extract `toughbook-tools-*-linux-x86_64.tar.gz`,
+open its directory, and run `./toughbook-tools`. Run `./toughbook-tools --install`
+to add it to your application menu. Keep the executable and `_internal` together.
+
+The baseline is glibc 2.36 (Debian 12+, Ubuntu 24.04+, current Fedora/Arch).
+Your kernel, graphics drivers and running desktop/audio services remain host
+components. See [portable installation and building](docs/portable.md) for the
+full boundary, licenses, corresponding sources and build command. Portable builds
+are local artifacts until published; the source setup below remains available.
+
+## Source setup: Toughbook Tools GUI
 
 The setup tool targets **Debian-based systems (including Ubuntu), Fedora, and
 Arch-based systems** using systemd. Use a local

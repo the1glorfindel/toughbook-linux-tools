@@ -103,4 +103,12 @@ It omits Git metadata, bytecode, and runtime state, and normalizes timestamps
 and ownership for reproducibility. The release test checks repeatability,
 required content, extracted command-line help, and absence of local home paths.
 
+## Portable runtime builds
+
+See [portable packaging](portable.md) for `python3 tools/make-bundle.py`, the
+Debian 12 build container, corresponding-source sidecar, and license inventory.
+The builder also checks imports and native clients in an offline minimal image
+without system Python. GUI/session acceptance uses the same native display smoke
+check through `./toughbook-tools --tool check-display`.
+
 No command here publishes an archive or changes a Git tag.

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — portable runtime
+
+- Bundle Python, Qt X11/Wayland, D-Bus/GLib/Tk bindings and native fix utilities.
+- Preserve complete runtime installations and helper paths; isolate host programs from bundled libraries.
+- Build on Debian 12 with dependency manifests, licenses, hashes and corresponding-source archives.
+
 ## Unreleased — desktop-independent fixes
 
 - Verify native X11/Wayland Qt clients, synthetic touch sampling, GUI shutdown and XInput read-back.

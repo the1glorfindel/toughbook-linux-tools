@@ -114,14 +114,16 @@ class ReleaseTests(unittest.TestCase):
                     'driver/uninstall.sh', 'data/org.toughbook.Buttons.desktop.in',
                     'data/org.toughbook.Buttons-autostart.desktop',
                     'data/toughbook-buttons.service.in', 'tools/setup-ubuntu.sh', 'tools/setup-linux.py', 'tools/check-display.py', 'toughbook/setup.py',
-                    'docs/README.md', 'docs/ubuntu.md', 'docs/linux.md', 'docs/desktops.md',
+                    'bundle/Containerfile', 'bundle/toughbook.spec', 'bundle/requirements.txt', 'tools/make-bundle.py',
+                    'docs/README.md', 'docs/portable.md', 'docs/ubuntu.md', 'docs/linux.md', 'docs/desktops.md',
                     'toughbook/session.py', 'toughbook/direct_buttons.py', 'toughbook/display_info.py', 'toughbook/xinput.py',
                     'docs/development.md', 'docs/driver-installation.md',
                     'docs/tablet-buttons.md', 'docs/screen-calibration.md',
                     'docs/audio-fix.md'} <= names)
                 for member in members:
                     self.assertNotIn('__pycache__',member.name)
-                    self.assertFalse(member.name.endswith(('.alsa-state','.json','.txt')))
+                    self.assertFalse(member.name.endswith(('.alsa-state','.json')) or
+                                     (member.name.endswith('.txt') and not member.name.endswith('/bundle/requirements.txt')))
                     self.assertEqual(member.uid,0)
                     self.assertEqual(member.mtime,0)
                     content=archive.extractfile(member).read()
