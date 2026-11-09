@@ -113,8 +113,8 @@ class ReleaseTests(unittest.TestCase):
                     'driver/70-panasonic-hbtn.rules', 'driver/install.sh',
                     'driver/uninstall.sh', 'data/org.toughbook.Buttons.desktop.in',
                     'data/org.toughbook.Buttons-autostart.desktop',
-                    'data/toughbook-buttons.service.in', 'tools/setup-ubuntu.sh',
-                    'docs/README.md', 'docs/ubuntu.md',
+                    'data/toughbook-buttons.service.in', 'tools/setup-ubuntu.sh', 'tools/setup-linux.py', 'toughbook/setup.py',
+                    'docs/README.md', 'docs/ubuntu.md', 'docs/linux.md',
                     'docs/development.md', 'docs/driver-installation.md',
                     'docs/tablet-buttons.md', 'docs/screen-calibration.md',
                     'docs/audio-fix.md'} <= names)
@@ -128,11 +128,11 @@ class ReleaseTests(unittest.TestCase):
                 extract=folder/'extracted with spaces'
                 archive.extractall(extract,filter='data')
             release=next(extract.iterdir())
-            for name in ['calibrate-screen.py','fix-audio.py','toughbook-buttons.py','toughbook-tools.py']:
+            for name in ['calibrate-screen.py','fix-audio.py','toughbook-buttons.py','toughbook-tools.py', 'tools/setup-linux.py']:
                 result=subprocess.run(['python3',str(release/name),'--help'],cwd=folder,
                                       capture_output=True,text=True,timeout=10)
                 self.assertEqual(result.returncode,0,result.stderr)
-                expected = '--uninstall' if name in ('toughbook-buttons.py', 'toughbook-tools.py') else '--restore'
+                expected = '--dry-run' if name == 'tools/setup-linux.py' else '--uninstall' if name in ('toughbook-buttons.py', 'toughbook-tools.py') else '--restore'
                 self.assertIn(expected,result.stdout)
 
 

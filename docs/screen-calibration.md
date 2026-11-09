@@ -16,8 +16,8 @@ Never copy another laptop's calibration coefficients as a universal fix.
 ## How measurement works
 
 The fullscreen window places nine targets on a 3×3 grid, at 12%, 50%, and 88% of
-each dimension. Finger taps are received through XWayland's pointer emulation
-using Tk. The window must first match the active internal display's dimensions
+each dimension. The standalone CLI receives finger taps through XWayland's pointer emulation
+using Tk; the KDE Qt page receives native touchscreen events. The window must first match the active internal display's dimensions
 and remain stable for several checks. Sampling starts only then; resizing during
 measurement clears the samples. A resize during the KDE preview cancels it.
 
@@ -51,10 +51,10 @@ python3 calibrate-screen.py --status
 python3 calibrate-screen.py
 ```
 
-On Ubuntu, run `bash tools/setup-ubuntu.sh` from the repository root first.
-Its APT packages include `python3-tk`, `python3-dbus`, `xwayland`, and `udev`;
-KDE sessions also receive the available `kscreen-doctor` package. See
-[Ubuntu bring-up](ubuntu.md).
+On Debian/Ubuntu, Fedora or Arch-based systems, run
+`python3 tools/setup-linux.py` from the repository root to install the appropriate
+Tk, XWayland, D-Bus, udev and KDE screen-helper packages. See [Linux setup](linux.md).
+The Qt calibration page supports KDE only; on GNOME use this standalone CLI.
 
 Use only the internal display, at 100% scale and normal landscape orientation.
 On GNOME, install the same base packages without `libkscreen`; run from the

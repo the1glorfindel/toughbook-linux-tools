@@ -1,4 +1,4 @@
-# Toughbook Tools for Fedora and Ubuntu
+# Toughbook Tools for Linux
 
 **Toughbook Tools** is a KDE/GNOME Wayland app for three Panasonic CF-19 Mk6
 issues: inaccurate finger touch, silent internal speakers, and missing tablet
@@ -18,55 +18,59 @@ other audio codecs are outside the tested scope. The detailed
 
 ## Quick start: Toughbook Tools GUI
 
-### Ubuntu
+The setup tool targets **Debian-based systems (including Ubuntu), Fedora, and
+Arch-based systems** using systemd. Use a local KDE Plasma or GNOME Wayland
+session. The Qt touchscreen calibration page requires KDE; GNOME calibration
+uses the experimental standalone CLI workflow below. Other desktops and X11
+are outside the supported workflow.
 
-On Ubuntu, log in to a GNOME or KDE **Wayland** session. From a fresh install,
-run these commands in a terminal as your desktop user:
+Install Git and Python first if needed:
+
+| Family | Bootstrap command |
+| --- | --- |
+| Debian / Ubuntu | `sudo apt-get update && sudo apt-get install git python3` |
+| Fedora | `sudo dnf install git python3` |
+| Arch / derivatives | Update with `sudo pacman -Syu`, then `sudo pacman -S --needed git python` |
+
+As your logged-in desktop user:
 
 ```sh
-sudo apt-get update
-sudo apt-get install -y git
 git clone https://github.com/the1glorfindel/toughbook-linux-tools.git
 cd toughbook-linux-tools
-bash tools/setup-ubuntu.sh
+python3 tools/setup-linux.py --dry-run
+python3 tools/setup-linux.py
 python3 toughbook-tools.py --status
 ```
 
-Open **Toughbook Tools** from the application menu. If you already cloned the
-repository, run `git pull` inside it and then rerun `bash tools/setup-ubuntu.sh`
-to update the installed app.
+The read-only preview lists the native package command. Setup detects the
+family from `/etc/os-release`, installs dependencies through APT, DNF or Pacman,
+and installs the per-user menu launcher. Use `--desktop kde` or `--desktop gnome`
+if desktop detection is unavailable. Open **Toughbook Tools** from your application
+menu. Rerun setup after `git pull` to update the installed copy.
 
-The script installs APT dependencies, including matching kernel headers when
-available, then installs the app menu launcher. It uses Ubuntu's PySide6 package
-when available or a persistent Python environment on releases such as 24.04
-that lack it. It does not install or load the optional tablet-button driver;
-use the Buttons page for that after checking the hardware. The launcher uses
-the same Python interpreter used at installation, so keep the
-`~/.local/share/toughbook-tools-python` environment if the script created it.
-Ubuntu hardware behavior still needs validation on the target
-installation; see [Ubuntu bring-up](docs/ubuntu.md).
+Setup uses distribution PySide6 packages when available. On Debian-based releases
+without them, it installs PySide6 in a persistent virtual environment under
+`~/.local/share/toughbook-tools-python` (or `$XDG_DATA_HOME`). Keep that environment;
+the menu launcher records its interpreter. `bash tools/setup-ubuntu.sh` remains a
+compatibility alias. See [Linux installation and compatibility](docs/linux.md)
+for dependencies, audio-session setup and kernel-header differences.
 
-### Fedora
+The optional tablet-button driver is separate. Setup does not install or load
+it. Add `--driver-prerequisites` to install its build packages and running-kernel
+headers, or use the Buttons page. Build-package installation may fail when
+matching headers are unavailable; ordinary app setup does not require headers.
+If Secure Boot is enabled, follow the [signing guide](docs/driver-installation.md)
+before loading the driver, then enable the button helper in the Buttons page.
 
-On Fedora KDE Wayland, install the dependencies, then install the app from the
-project directory as your logged-in user:
+Calibrate with only the internal display active, in normal landscape at 100%
+scale. Audio repair requires a working PipeWire/Pulse compatibility server and
+WirePlumber session; unplug wired headphones before testing. Expand
+**Troubleshooting output** to inspect operation results.
 
-```sh
-sudo dnf install python3 python3-pyside6 qt6-qtwayland python3-dbus python3-gobject libkscreen systemd-udev pipewire-utils pulseaudio-utils alsa-utils wireplumber xdg-desktop-portal xdg-desktop-portal-kde
-python3 toughbook-tools.py --install
-```
-
-Open **Toughbook Tools** from KDE's application menu, or run
-`python3 toughbook-tools.py`. Use its Touchscreen, Audio, and Tablet Buttons
-pages for guided setup and recovery. Expand **Troubleshooting output** to see
-operation results. Calibrate with only the internal display active, in normal
-landscape at 100% scale; unplug wired headphones before testing the speaker.
-
-The Buttons page can install its optional driver and distribution build packages
-through an administrator authentication dialog. If Secure Boot is enabled,
-follow the [signing and MOK guide](docs/driver-installation.md) before loading
-the module. Enable the button shortcut helper in that page after installing the
-driver.
+Fedora KDE on the reference CF-19 has physical validation evidence. Debian,
+Ubuntu, and Arch compatibility is prepared in code and automated tests; live
+installation and hardware acceptance remain pending. Distribution coverage does
+not broaden the hardware scope in the table above.
 
 ## Independent scripts
 

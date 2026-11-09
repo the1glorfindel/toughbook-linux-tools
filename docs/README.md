@@ -8,6 +8,8 @@ selection options.
 
 ## Issue and feature guides
 
+- [Linux installation and compatibility](linux.md): Debian/Ubuntu, Fedora and
+  Arch setup, package mapping, session prerequisites and kernel headers.
 - [Ubuntu bring-up](ubuntu.md): installation, distribution differences, and
   first-run checks after switching systems.
 
@@ -18,7 +20,7 @@ selection options.
 - [Tablet buttons](tablet-buttons.md): desktop actions, customization, portal
   shortcuts, rotation, and session troubleshooting.
 - [Tablet-button driver](driver-installation.md): missing ACPI binding, exact
-  Mk6 firmware mapping, Fedora/Ubuntu DKMS setup, Secure Boot, and driver recovery.
+  Mk6 firmware mapping, Debian/Fedora/Arch DKMS setup, Secure Boot, and driver recovery.
 
 ## Project notes
 

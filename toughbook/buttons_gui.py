@@ -41,7 +41,7 @@ class ButtonsPage(QWidget):
             package_distro = distro.distro_id()
         except ToolError:
             package_distro = 'supported distribution'
-        self.packages_button = QPushButton(f'Install {package_distro.title()} prerequisites…')
+        self.packages_button = QPushButton(f'Install {distro.family_name(package_distro)} prerequisites…')
         self.identify_button = QPushButton('Identify physical buttons')
         for b in (self.packages_button, self.install_button, self.load_button, self.remove_button, self.identify_button): driver_buttons.addWidget(b)
         col.addLayout(driver_buttons)
@@ -286,9 +286,9 @@ class ButtonsPage(QWidget):
         except ToolError as exc:
             self.log.emit(str(exc))
             return
-        label = f'Install {package_distro.title()} prerequisites'
+        label = f'Install {distro.family_name(package_distro)} prerequisites'
         if QMessageBox.question(self, label,
-                f'Install the driver build packages with {Path(command[0]).name}? This uses the running kernel version.\n\n' + ' '.join(command[3:]),
+                f'Install the driver build packages with {Path(command[0]).name}? This selects headers for the running kernel. After a kernel update, reboot before building.\n\n' + ' '.join(command[4:] if package_distro == 'arch' else command[3:]),
                 QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel) != QMessageBox.Yes:
             return
         self._driver_steps = [(label, command)]

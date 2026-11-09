@@ -25,7 +25,7 @@ they are not guessed or converted to a nearby key. The module creates only the
 `Panasonic CF-19 Tablet Buttons` input device. The separate GPL license and
 upstream attribution are in [driver/COPYING](../driver/COPYING).
 
-## Install on Fedora or Ubuntu
+## Install on Debian-based, Fedora or Arch-based Linux
 
 Run these commands from the repository root. Install the running kernel's
 matching development files; the script builds and registers the module through
@@ -38,7 +38,7 @@ sudo dnf install make gcc kernel-devel-$(uname -r) dkms mokutil openssl
 sudo bash driver/install.sh
 ```
 
-On Ubuntu, use the matching headers for the running kernel:
+On Debian or Ubuntu, use the matching headers for the running kernel:
 
 ```sh
 sudo apt-get update
@@ -46,10 +46,22 @@ sudo apt-get install build-essential linux-headers-$(uname -r) dkms mokutil open
 sudo bash driver/install.sh
 ```
 
-The installer accepts either distribution's kernel-header layout through
-`/lib/modules/$(uname -r)/build`. If that link is missing, install matching
-headers or boot a packaged kernel with headers available. The GUI's
-**Install prerequisites** button chooses APT or DNF from `/etc/os-release`.
+On Arch, select headers for your actual kernel package. For the stock `linux`
+kernel on an up-to-date system:
+
+```sh
+sudo pacman -S --needed base-devel linux-headers dkms mokutil openssl kmod systemd
+sudo bash driver/install.sh
+```
+
+Use `linux-lts-headers`, `linux-zen-headers`, or the matching custom package as
+appropriate. Reboot after a rolling kernel update before building. The shared
+`python3 tools/setup-linux.py --driver-prerequisites` command and GUI
+**Install prerequisites** control select APT, DNF or Pacman and derive Arch
+headers from the running kernel's `pkgbase` file. See [kernel header details](linux.md).
+
+All three families use `/lib/modules/$(uname -r)/build`. If it is missing,
+install matching headers or boot a packaged kernel with headers available.
 
 The installer installs the dedicated-device udev rule and builds/signs the
 module, but intentionally does **not** load it. Complete Secure Boot signing
@@ -68,6 +80,11 @@ broad `input` group. On later boots, ACPI modalias discovery should load the
 installed module automatically.
 
 ## Secure Boot
+
+MOK enrollment below assumes a shim/MOK boot chain. For Arch or another
+installation using a different trust chain, configure DKMS signing with a key
+trusted by that kernel/firmware setup; generating a MOK alone does not establish
+trust.
 
 Never disable Secure Boot automatically or as an installation workaround. On
 EFI systems, the installer reports its state and DKMS signs according to the
@@ -101,7 +118,8 @@ and [Red Hat kernel signing](https://docs.redhat.com/en/documentation/red_hat_en
 ## Troubleshooting
 
 - **Installer says matching kernel headers are missing:** install
-  `kernel-devel-$(uname -r)` on Fedora or `linux-headers-$(uname -r)` on Ubuntu
+  `kernel-devel-$(uname -r)` on Fedora, `linux-headers-$(uname -r)` on
+  Debian/Ubuntu, or the matching `<pkgbase>-headers` on Arch
   and retry. Confirm `/lib/modules/$(uname -r)/build` points to a real directory.
   Also install `make`, `gcc`, `dkms`,
   `modinfo`, and `udevadm` (the packages above provide these tools).

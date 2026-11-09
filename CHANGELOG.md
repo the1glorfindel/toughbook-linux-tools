@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased — Ubuntu preparation
+## Unreleased — general Linux preparation
+
+- Share setup and dependency selection across Debian/Ubuntu, Fedora and Arch families.
+- Add native Pacman commands, kernel-pkgbase header selection and desktop portal packages.
+- Complete Fedora standalone calibration/polkit dependencies and retain Ubuntu setup alias.
+- Add read-only setup plans, optional build prerequisites and isolated distribution tests.
+- Document PipeWire session prerequisites, Arch updates and physical validation limits.
+
 
 - Add Ubuntu APT/PySide6 setup and a launcher that retains the selected Python interpreter.
 - Select Fedora or Ubuntu build packages in the Buttons page and use the common

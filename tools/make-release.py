@@ -41,7 +41,7 @@ def build(destination):
             data = path.read_bytes()
             info.size, info.mtime, info.uid, info.gid = len(data), 0, 0, 0
             info.uname = info.gname = ''
-            info.mode = 0o755 if relative.name in {'calibrate-screen.py','fix-audio.py','make-release.py','toughbook-buttons.py','toughbook-tools.py','install.sh','uninstall.sh','setup-ubuntu.sh'} else 0o644
+            info.mode = 0o755 if relative.name in {'calibrate-screen.py','fix-audio.py','make-release.py','toughbook-buttons.py','toughbook-tools.py','install.sh','uninstall.sh','setup-ubuntu.sh','setup-linux.py'} else 0o644
             archive.addfile(info, io.BytesIO(data))
     destination.mkdir(parents=True, exist_ok=True)
     path = destination/f'{name}.tar.gz'

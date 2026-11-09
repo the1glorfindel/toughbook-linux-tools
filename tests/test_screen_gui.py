@@ -4,7 +4,7 @@ from unittest.mock import patch
 from pathlib import Path
 import tempfile
 
-from PySide6.QtCore import QEventLoop, QTimer
+from PySide6.QtCore import QEvent, QEventLoop, QTimer
 from PySide6.QtWidgets import QApplication
 
 from toughbook.affine import TARGETS
@@ -17,6 +17,11 @@ APP = QApplication.instance() or QApplication([])
 
 
 class TargetTests(unittest.TestCase):
+    def tearDown(self):
+        APP.sendPostedEvents(None, QEvent.DeferredDelete)
+        APP.processEvents()
+        APP.sendPostedEvents(None, QEvent.DeferredDelete)
+
     def test_exactly_nine_touch_samples_emit_once(self):
         with patch.object(_Targets, 'showFullScreen'):
             dialog = _Targets((1000, 800))
@@ -33,6 +38,7 @@ class TargetTests(unittest.TestCase):
             self.assertFalse(dialog.ready)
         finally:
             dialog.finish()
+            dialog.deleteLater()
 
     def test_applied_preview_cancel_restores_previous_mapping(self):
         with tempfile.TemporaryDirectory() as folder, patch.object(ScreenPage, 'refresh'):
@@ -53,6 +59,7 @@ class TargetTests(unittest.TestCase):
                 kwin.return_value.restore.assert_called_once()
                 self.assertEqual(load_json(path)['status'], 'cancelled')
             page.close()
+            page.deleteLater()
 
 
 if __name__ == '__main__':

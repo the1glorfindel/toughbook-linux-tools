@@ -87,13 +87,25 @@ python3 fix-audio.py --status
 python3 fix-audio.py
 ```
 
-On Ubuntu, install the corresponding tools with:
+On Debian or Ubuntu, install the corresponding tools with:
 
 ```sh
 sudo apt-get install pipewire-bin wireplumber pulseaudio-utils alsa-utils
 python3 fix-audio.py --status
 python3 fix-audio.py
 ```
+
+On Arch-based systems:
+
+```sh
+sudo pacman -S --needed pipewire-audio alsa-card-profiles wireplumber libpulse alsa-utils
+python3 fix-audio.py --status
+python3 fix-audio.py
+```
+
+All distributions require an existing PipeWire audio session, including its
+PulseAudio compatibility server. Installing tools alone does not migrate an
+older PulseAudio desktop; see [Linux session setup](linux.md).
 
 Listen for both left/right test samples before answering each confirmation.
 If either test is inaudible, answer no so the script can restore its snapshot.

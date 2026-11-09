@@ -9,20 +9,6 @@ from unittest.mock import patch
 from toughbook import audio, common, distro
 
 
-class DistroTests(unittest.TestCase):
-    def test_ubuntu_and_fedora_packages_use_running_kernel(self):
-        with tempfile.TemporaryDirectory() as folder:
-            path = Path(folder) / 'os-release'
-            path.write_text('ID=ubuntu\nID_LIKE=debian\n')
-            self.assertEqual(distro.distro_id(path), 'ubuntu')
-            path.write_text('ID=fedora\n')
-            self.assertEqual(distro.distro_id(path), 'fedora')
-        with patch.object(distro.shutil, 'which', return_value='/usr/bin/apt-get'):
-            self.assertEqual(distro.driver_install_command('test-kernel', 'ubuntu'),
-                             ['/usr/bin/apt-get', 'install', '-y', 'build-essential',
-                              'linux-headers-test-kernel', 'dkms', 'mokutil', 'openssl'])
-
-
 class WirePlumberTests(unittest.TestCase):
     def test_detects_both_config_formats(self):
         for version, expected in [('wireplumber 0.4.17', 'legacy'),
@@ -50,7 +36,8 @@ class WirePlumberTests(unittest.TestCase):
 
     def test_legacy_backup_restores_exact_files(self):
         with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ,
-                {'XDG_CONFIG_HOME': str(Path(folder) / 'config')}):
+                {'XDG_CONFIG_HOME': str(Path(folder) / 'config'),
+                 'XDG_STATE_HOME': str(Path(folder) / 'state')}):
             config = common.config_dir()
             paths = audio.audio_paths(config, 'legacy')
             paths[2].parent.mkdir(parents=True)

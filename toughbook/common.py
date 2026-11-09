@@ -12,10 +12,10 @@ class ToolError(Exception):
     pass
 
 
-def run(*args, timeout=20, check=True):
+def run(*args, timeout=20, check=True, env=None):
     try:
         result = subprocess.run([str(a) for a in args], capture_output=True,
-                                text=True, timeout=timeout)
+                                text=True, timeout=timeout, env=env)
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise ToolError(f'Cannot run {args[0]}: {exc}') from exc
     if check and result.returncode:

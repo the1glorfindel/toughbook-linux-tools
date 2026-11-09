@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from PySide6.QtCore import QEvent
 from PySide6.QtWidgets import QApplication
 
 from toughbook import buttons
@@ -32,6 +33,8 @@ class ButtonPageTests(unittest.TestCase):
             finally:
                 page.timer.stop()
                 page.close()
+                page.deleteLater()
+                APP.sendPostedEvents(None, QEvent.DeferredDelete)
 
 
 if __name__ == '__main__':

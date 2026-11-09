@@ -1,5 +1,8 @@
 # Ubuntu bring-up
 
+For shared Debian/Ubuntu, Fedora and Arch setup, start with
+[Linux installation and compatibility](linux.md).
+
 Ubuntu support is prepared for the same CF-19 Mk6 hardware as the Fedora
 release. It has not yet been physically tested on Ubuntu. Use a GNOME or KDE
 Wayland session; X11 and other CF-19 revisions remain outside the supported
@@ -11,30 +14,31 @@ From a fresh Ubuntu desktop, as the logged-in user:
 
 ```sh
 sudo apt-get update
-sudo apt-get install -y git
+sudo apt-get install -y git python3
 git clone https://github.com/the1glorfindel/toughbook-linux-tools.git
 cd toughbook-linux-tools
-bash tools/setup-ubuntu.sh
+python3 tools/setup-linux.py
 python3 toughbook-tools.py --status
 ```
 
 Open **Toughbook Tools** from the application menu after setup finishes.
 
 The script uses APT for Python, D-Bus, Tk, XWayland, PipeWire, WirePlumber,
-ALSA, portal, DKMS, compiler, Secure Boot, and matching kernel-header packages.
+ALSA and portal packages. Add `--driver-prerequisites` for DKMS, compiler,
+Secure Boot tools and matching kernel-header packages.
 It installs PySide6 from APT when available. Ubuntu 24.04 lacks that package,
 so the script creates a persistent virtual environment with access to Ubuntu's
 system `dbus` and `gi` Python modules and installs PySide6 there. The application
 menu entry uses the selected interpreter.
 
-If matching headers are unavailable for the running kernel, the GUI and
-standalone tools can still install, but the optional button driver cannot be
-built until the corresponding `linux-headers-$(uname -r)` package or kernel
+Ordinary setup does not require headers. If matching headers are unavailable,
+omit `--driver-prerequisites`. The optional button driver cannot be built until the corresponding `linux-headers-$(uname -r)` package or kernel
 header tree is available. Reboot into a packaged Ubuntu kernel if needed.
 
 Run `python3 toughbook-tools.py --status` for a read-only hardware check, then
-launch **Toughbook Tools** from the application menu. The touchscreen and
-button actions need a local Wayland desktop session. The audio repair also
+launch **Toughbook Tools** from the application menu. The Qt calibration page
+requires KDE; GNOME calibration uses the standalone CLI. Touchscreen and button
+actions need a local Wayland desktop session. The audio repair also
 requires that the card be managed by PipeWire and WirePlumber; it will inspect
 the installed profile format before changing audio settings.
 
@@ -42,8 +46,8 @@ the installed profile format before changing audio settings.
 
 - The optional DKMS installer checks `/lib/modules/$(uname -r)/build`, which
   works with Ubuntu's `linux-headers-*` and Fedora's `kernel-devel-*` layouts.
-- The Buttons page uses APT on Ubuntu and DNF on Fedora for driver build
-  prerequisites. It never replaces another driver bound to `MAT001F`.
+- The Buttons page uses APT on Debian/Ubuntu, DNF on Fedora and Pacman on Arch
+  for driver build prerequisites. It never replaces another driver bound to `MAT001F`.
 - Ubuntu 24.04 ships WirePlumber 0.4, whose ALSA rules are Lua fragments under
   `~/.config/wireplumber/main.lua.d/`. Newer WirePlumber 0.5 uses `.conf`
   fragments under `~/.config/wireplumber/wireplumber.conf.d/`. The audio tool

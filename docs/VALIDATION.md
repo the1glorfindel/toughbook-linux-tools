@@ -45,7 +45,7 @@ archive ownership and timestamps, and emits a SHA-256 checksum beside the archiv
 
 ## Physical acceptance checklist — pending for the public refactor
 
-Use a separate vanilla Fedora or Ubuntu installation or backup first. Record the distribution,
+Use a separate vanilla Debian, Ubuntu, Fedora or Arch installation or backup first. Record the distribution,
 KWin/GNOME, PipeWire/WirePlumber, and kernel versions plus CF-19 revision and
 sensor/codec IDs. Do not mark an item passed solely because its simulation passes.
 
@@ -79,8 +79,8 @@ sensor/codec IDs. Do not mark an item passed solely because its simulation passe
 ### Packaging/dependencies
 
 - Extract into a path with spaces and run both entrypoints from another directory.
-- Follow README setup commands on vanilla Fedora KDE/Workstation and Ubuntu
-  GNOME/KDE, recording package and Python-interpreter versions.
+- Follow README setup commands on vanilla Fedora KDE/Workstation, Debian/Ubuntu
+  GNOME/KDE and Arch KDE/GNOME, recording package and Python-interpreter versions.
 - Confirm helpful failures when a required dependency is absent.
 - Verify the checksum, run tests from the extracted archive, and review its file list.
 - Promote GNOME from experimental only after the physical GNOME checks pass.
@@ -125,7 +125,7 @@ GNOME remains awaiting physical validation. Hold bindings and worn-switch deboun
 are outside this first version. See [tablet-button guide](tablet-buttons.md).
 Version 0.1.0 includes these changes. The existing `v0.0.1` tag and archives remain unchanged.
 
-## Unified Toughbook Tools GUI (unreleased)
+## Unified Toughbook Tools GUI (0.2.0; physical GUI acceptance pending)
 
 The Qt6 application combines KDE touch calibration, graphical audio confirmations,
 button assignments, driver guidance, recovery controls, and expandable command
@@ -138,3 +138,33 @@ The migrated button helper restarted with its existing four portal bindings.
 Physical use of the new Qt calibration targets, audible speaker test, button
 identification pause, and privileged driver controls remains to be checked by
 the user. These GUI workflows are not yet hardware-validated.
+
+## General Linux preparation (unreleased)
+
+Shared setup now selects Debian/Ubuntu, Fedora or Arch packages, including the
+appropriate desktop portal and kernel headers for optional driver builds.
+Automated checks cover distribution identities/derivatives, package-manager
+commands, APT candidates/PySide fallback, KDE helper selection, Arch kernel
+variants and failure cases, read-only setup plans, and interpreter selection.
+Fedora dependencies include standalone Tk/XWayland calibration and polkit.
+
+These checks do not install packages on clean Debian/Arch systems or validate
+hardware there. Before claiming physical support, follow the acceptance checklist
+on each family, record package/kernel/desktop versions, confirm PipeWire/Pulse
+session configuration, and exercise DKMS upgrades and Secure Boot with the host's
+actual trust chain. Non-systemd and immutable systems are outside automatic setup.
+Historical state/rule/archive names containing `fedora` remain for compatibility
+so existing preferences and recovery backups continue to resolve.
+
+Repository metadata verification during this preparation found all selected
+runtime/build-tool packages in Debian 12 and 13 main and Arch core/extra indexes.
+Debian 12 selected the PySide6 venv fallback; Debian 13 selected native PySide6.
+Fedora 44 official repositories provided all selected package names except the
+exact development package for the diagnostic host's older running kernel,
+`7.2.11-200.fc44.x86_64`. This confirms the need to reboot into a kernel with
+available matching development files before building; app setup is independent.
+No system packages or live hardware configuration were changed for these checks.
+The isolated Python 3.14 / PySide6 6.12 offscreen suite passes, including archive
+reproducibility, CLI help, portable C decoder and cross-distribution setup tests.
+GUI test teardown now explicitly disposes of widgets before QApplication exits;
+this addresses an intermittent shutdown crash also observed on the unchanged suite.

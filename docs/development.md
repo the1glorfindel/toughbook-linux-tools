@@ -5,8 +5,11 @@
 Install the GUI dependencies from the main README first. From the repository root:
 
 ```sh
-python3 -m unittest discover -s tests -v
+QT_QPA_PLATFORM=offscreen python3 -m unittest discover -s tests -v
 ```
+
+On Debian releases using the private PySide6 environment, run tests with
+`~/.local/share/toughbook-tools-python/bin/python` instead of `python3`.
 
 The suite uses mocks and temporary state for desktop, audio, device discovery,
 and rollback behavior; it does not prove physical hardware behavior. Some tests
@@ -35,7 +38,7 @@ python3 -m unittest discover -s tests -p test_release.py -v
 
 The archive is written beside the repository by default, with a SHA-256 file.
 The builder allowlists source and test files, all Markdown under `docs/`, the
-driver sources/license/build files, the Ubuntu setup script, desktop integration
+driver sources/license/build files, the shared Linux setup entrypoint and legacy alias, desktop integration
 templates, and the app icon.
 It omits Git metadata, bytecode, and runtime state, and normalizes timestamps
 and ownership for reproducibility. The release test checks repeatability,
