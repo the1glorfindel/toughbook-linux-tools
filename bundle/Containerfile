@@ -10,6 +10,8 @@ RUN sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/debian.s
     libegl1 libgl1 libfontconfig1 fonts-dejavu-core libxkbcommon-x11-0 \
     libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
     libxcb-render-util0 libxcb-xinerama0 libxcb-xkb1 libxcb-shape0
+RUN apt-get install -y --no-install-recommends \
+    libwayland-client0 libwayland-cursor0 libwayland-egl1 libharfbuzz0b libdrm2
 COPY bundle/requirements.txt /tmp/requirements.txt
 RUN python3 -m venv --system-site-packages /opt/build-python \
  && /opt/build-python/bin/python -m pip install --no-cache-dir -r /tmp/requirements.txt
