@@ -11,6 +11,23 @@ from toughbook.common import ToolError
 
 
 class BackendTests(unittest.TestCase):
+    def test_x11_uses_live_shell_for_actions_but_native_rotation(self):
+        for shell, backend in (('org.gnome.Shell', 'gnome'),
+                               ('org.kde.plasmashell', 'kde'), ('', 'x11')):
+            dbus = Mock()
+            dbus.SessionBus.return_value.name_has_owner.side_effect = lambda name: name == shell
+            with patch.object(desktop, 'backend_name', return_value='x11'), \
+                 patch.object(desktop, 'dbus_module', return_value=dbus), \
+                 patch.object(desktop, '_keyboard') as keyboard, \
+                 patch.object(desktop, '_launcher') as launcher, \
+                 patch.object(desktop, '_rotate_x11') as rotate:
+                desktop.perform('keyboard')
+                desktop.perform('launcher')
+                desktop.perform('rotate')
+                keyboard.assert_called_once_with(backend)
+                launcher.assert_called_once_with(backend)
+                rotate.assert_called_once_with()
+
     def test_accepts_x11_and_unknown_wayland_desktops(self):
         with patch.dict(os.environ, {'XDG_SESSION_TYPE': 'x11', 'XDG_CURRENT_DESKTOP': 'XFCE'}):
             self.assertEqual(desktop.backend_name(), 'x11')

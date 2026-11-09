@@ -79,7 +79,10 @@ def _launcher(backend):
                 dbus.SessionBus().get_object('org.kde.plasmashell', '/PlasmaShell').activateLauncherMenu(timeout=10)
             else:
                 obj = dbus.SessionBus().get_object('org.gnome.Shell', '/org/gnome/Shell')
-                dbus.Interface(obj, 'org.gnome.Shell').FocusSearch(timeout=10)
+                # FocusSearch is restricted to trusted Shell clients on GNOME 46.
+                # The overview property remains available to desktop utilities.
+                dbus.Interface(obj, 'org.freedesktop.DBus.Properties').Set(
+                    'org.gnome.Shell', 'OverviewActive', True, timeout=10)
             return
         except Exception:
             pass
@@ -255,6 +258,17 @@ def perform(action):
     if action not in ('keyboard', 'launcher', 'lock', 'rotate'):
         raise ToolError(f'Unknown desktop button action: {action}')
     backend = backend_name()
+    # X11 identifies the display protocol, not the shell providing these actions.
+    # Keep XRandR for rotation, but use the running shell's keyboard/launcher.
+    if backend == 'x11' and action in ('keyboard', 'launcher'):
+        try:
+            bus = dbus_module().SessionBus()
+            if bus.name_has_owner('org.gnome.Shell'):
+                backend = 'gnome'
+            elif bus.name_has_owner('org.kde.plasmashell'):
+                backend = 'kde'
+        except Exception:
+            pass
     if action == 'keyboard':
         _keyboard(backend)
     elif action == 'launcher':
