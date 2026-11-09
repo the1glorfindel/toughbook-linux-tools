@@ -12,10 +12,10 @@ The reference installation remains untouched during release preparation. No
 public-release script was applied to its live desktop, audio configuration, or
 udev rules. GNOME Shell is not installed in the diagnostic environment.
 
-Ubuntu compatibility is prepared in code and documentation but has not yet been
-validated on a live Ubuntu installation. In particular, confirm the
-WirePlumber 0.4 audio path on Ubuntu 24.04 and the installed kernel's DKMS
-build/signing behavior before treating those features as verified.
+Initial Ubuntu compatibility preparation had no live installation evidence.
+The Ubuntu GNOME X11 section below now records specific hardware checks,
+including the WirePlumber 0.4 audio path. Clean setup and the installed kernel's
+DKMS build/signing behavior still need separate validation.
 
 ## Automated validation
 
@@ -227,3 +227,71 @@ not mistaken for eligible internal hardware by the calibration layout guard.
 Actual touch accuracy, ALSA/speaker behavior, real display rotation with finger
 alignment, direct-device ACL/lock/VT behavior, suspend and login persistence on
 CF-19 hardware still require the physical acceptance checklist on both protocols.
+
+## Ubuntu GNOME X11 hardware checks (2026-11-09)
+
+Coordinated live checks used a CF-192NYZX1M running Ubuntu 24.04.4,
+GNOME Shell 46.0, native X11, kernel 6.17.0-23-generic, Qt 6.12.0 and
+WirePlumber 0.4.17. Hardware identities were Wacom `056a:0093` interface 01
+and Realtek ALC269VC (`10ec0269`). These results supersede the earlier pending
+Ubuntu statements only for the checks listed here; they do not establish clean
+installation, other desktop/protocol support, or the entire acceptance checklist.
+
+Code revision `9a442ee` passed all 158 automated tests both locally and on the
+Toughbook. Earlier revisions were tested and corrected during the same session:
+
+- Installing with `/usr/bin/python3 toughbook-buttons.py --install` now retains
+  the working managed virtual-environment interpreter in the GUI and hidden
+  Buttons entries, both autostarts and the helper service. The helper is active
+  with an empty error status.
+- The user confirmed internal-speaker playback before and after a WirePlumber
+  restart on `31822f8`; the legacy 0.4 rule path and saved recovery baseline were
+  exercised. PipeWire sink matching uses the stable device name when the native
+  card field is absent. The initially proposed object-ID fallback failed after
+  restart and was replaced before this pass.
+- GNOME X11 fullscreen targets initially failed with the dialog window type.
+  A normal window type reached 1024x768. The user completed nine physical finger
+  samples, accepted the preview and confirmed calibration success on `c3be2a7`.
+  The saved fit error was 6.35 pixels, with matching login activation data.
+- Native automated Escape cancellation preserved both the live transform and
+  saved activation bytes. This was an injected native Escape, not a physical
+  keypress by the user.
+- Rotation initially lost calibration because the desktop reset the XInput
+  transform. Stabilization and bounded transient-readback retries corrected it.
+  On `b7daee3`, three rotated physical verification measurements passed the
+  existing 20-pixel maximum-error gate: right 19.80, inverted 12.25 and left
+  13.91 pixels. A complete rotation cycle returned to the accepted landscape
+  transform without recovery. Landscape verification initially failed at
+  20.13 pixels, then passed at 19.53 pixels on a repeat without changing the
+  calibration or threshold. The user accepted the passing measurements; these
+  near-threshold results do not establish greater precision.
+- On `f32a747`, the user confirmed the physical Keyboard button enables GNOME's
+  keyboard for a finger-touched text field, no longer opens Settings, and leaves
+  ordinary keyboard typing working. A live exclusive-access probe showed the
+  tablet device busy while the helper ran, available after stopping it, and busy
+  again after restart. The helper revalidates the opened dedicated device before
+  grabbing it; ordinary keyboards are not opened or grabbed.
+- Native GUI checks on `2272671` rendered all four pages through Qt's `xcb`
+  platform. Identification received a physical Rotation press/release pair
+  through the helper without running the action. Stopping the helper terminated
+  the command-line monitor with a clear error; restarting restored normal helper
+  status. On `9a442ee`, live D-Bus checks confirmed `paused=true` on pause,
+  `paused=false` on resume, empty errors and exclusive device access retained.
+- On the final code, the user explicitly confirmed Circle opens the launcher,
+  rotation cycles work, Key locks the session, Circle/Rotation do not act while
+  locked, and Circle works again after unlocking. An earlier timed observer
+  captured no transitions, so this pass is based on the user's physical report,
+  not an automated lock-state timeline.
+- The user also explicitly confirmed all four buttons identify with named paired
+  edges and no assigned actions. The captured GUI log independently contains
+  the Rotation pair only; the all-four result is the user's confirmation.
+  Final read-only audit found 31 installed code/data files matching the tested
+  worktree, saved/live finger matrices agreeing within `1e-4`, the speaker sink
+  unmuted, and the direct helper active with no error and `paused=false`.
+  The final installed `9a442ee` GUI also rendered all four pages through `xcb`
+  and shut down cleanly. No requested physical confirmations remained pending.
+
+Reboot/login persistence, suspend/resume, VT switching and ACL revocation,
+headphone insertion/removal and complete audio restore on this Ubuntu installation
+remain separate acceptance work. These checks do not validate native GNOME
+Wayland, additional CF-19 revisions or newly built portable binaries.

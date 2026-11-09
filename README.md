@@ -82,10 +82,11 @@ scale. Audio repair requires a working PipeWire/Pulse compatibility server and
 WirePlumber session; unplug wired headphones before testing. Expand
 **Troubleshooting output** to inspect operation results.
 
-Fedora KDE on the reference CF-19 has physical validation evidence. Debian,
-Ubuntu, and Arch compatibility is prepared in code and automated tests; live
-installation and hardware acceptance remain pending. Distribution coverage does
-not broaden the hardware scope in the table above.
+Fedora KDE and Ubuntu 24.04 GNOME X11 on the reference CF-19 have physical
+validation evidence. See [validation results](docs/VALIDATION.md) for measured
+touch accuracy, tested workflows and remaining checks. Clean distribution setup,
+Debian/Arch hardware acceptance and additional Ubuntu desktops remain pending.
+Distribution coverage does not broaden the hardware scope in the table above.
 
 ## Independent scripts
 

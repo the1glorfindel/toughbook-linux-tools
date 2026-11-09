@@ -12,8 +12,9 @@ setup targets traditional writable APT/DNF/Pacman desktop installations.
 This changes distribution packaging, not hardware support. The reference hardware
 remains the Panasonic CF-19 Mk6, Wacom `056a:0093` finger interface, Realtek
 ALC269VC and `MAT001F` tablet buttons. KDE Wayland has hardware evidence from
-Fedora; the new Qt workflows and Debian/Ubuntu/Arch installations still need the
-[physical acceptance checks](VALIDATION.md). Other local Wayland and X11 desktops are supported through capability-based
+Fedora; Ubuntu 24.04 GNOME X11 also has specific physical checks recorded in
+[validation status](VALIDATION.md). Clean distribution setup and the remaining
+acceptance checks are still pending. Other local Wayland and X11 desktops are supported through capability-based
 backends. See [desktop compatibility](desktops.md) for calibration paths, direct
 button input and optional action providers; new paths still need physical checks.
 

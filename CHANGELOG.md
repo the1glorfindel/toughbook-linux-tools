@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — Ubuntu GNOME X11 hardware fixes
+
+- Preserve the GUI-capable Python interpreter across app and button installation.
+- Use live shell actions on X11 and GNOME's supported overview property.
+- Match PipeWire sinks by stable device name when the native card field is absent.
+- Show fullscreen calibration targets on GNOME X11 and preserve touch calibration
+  across rotation, including asynchronous desktop resets.
+- Exclusively read the verified tablet-button device to prevent duplicate GNOME
+  shortcuts, while leaving ordinary keyboards alone.
+- Record coordinated physical speaker, finger calibration and button validation
+  in `docs/VALIDATION.md`, including measured limits and remaining checks.
+
 ## Unreleased — portable runtime
 
 - Bundle Python, Qt X11/Wayland, D-Bus/GLib/Tk bindings and native fix utilities.

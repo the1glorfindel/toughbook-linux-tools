@@ -3,8 +3,9 @@
 Toughbook Tools configures the four CF-19 Mk6 front buttons independently of the
 desktop shell. The default helper reads the dedicated driver device; an optional
 shortcut-portal mode retains the previous KDE/GNOME integration. Existing physical
-validation is from Fedora 44 KDE Wayland; direct input and other desktop paths
-still need the [acceptance checks](VALIDATION.md).
+validation includes Fedora 44 KDE Wayland portal delivery and Ubuntu 24.04
+GNOME X11 dedicated-device delivery. See the measured results and remaining
+[acceptance checks](VALIDATION.md).
 
 | Physical button | Default action | Driver key |
 | --- | --- | --- |

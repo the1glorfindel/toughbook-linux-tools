@@ -4,7 +4,9 @@ For shared Debian/Ubuntu, Fedora and Arch setup, start with
 [Linux installation and compatibility](linux.md).
 
 Ubuntu support is prepared for the same CF-19 Mk6 hardware as the Fedora
-release. It has not yet been physically tested on Ubuntu. Use a local Wayland or X11 graphical session. See [desktop compatibility](desktops.md)
+release. Specific Ubuntu 24.04 GNOME X11 hardware checks are recorded in
+[validation status](VALIDATION.md); clean setup, DKMS and other Ubuntu sessions
+still need acceptance testing. Use a local Wayland or X11 graphical session. See [desktop compatibility](desktops.md)
 for common calibration and dedicated-device button delivery. Other CF-19 revisions
 remain outside the tested hardware scope.
 
