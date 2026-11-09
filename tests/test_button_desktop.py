@@ -11,6 +11,13 @@ from toughbook.common import ToolError
 
 
 class BackendTests(unittest.TestCase):
+    def test_gnome_launcher_uses_public_overview_property(self):
+        dbus = Mock()
+        with patch.object(desktop, 'dbus_module', return_value=dbus):
+            desktop._launcher('gnome')
+        dbus.Interface.return_value.Set.assert_called_once_with(
+            'org.gnome.Shell', 'OverviewActive', True, timeout=10)
+
     def test_x11_uses_live_shell_for_actions_but_native_rotation(self):
         for shell, backend in (('org.gnome.Shell', 'gnome'),
                                ('org.kde.plasmashell', 'kde'), ('', 'x11')):

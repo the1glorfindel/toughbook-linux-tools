@@ -231,6 +231,16 @@ class ScreenTransactionTests(TemporaryState):
 
 
 class AudioTransactionTests(TemporaryState):
+    def test_pipewire_sink_device_id_without_pulseaudio_card_field(self):
+        sink = {key: value for key, value in SINK.items() if key != 'card'}
+        sink['properties'] = {'device.id': str(CARD['card_serial'])}
+        other = {**sink, 'properties': {'device.id': '999'}}
+        with patch.object(audio, 'run', return_value=Mock(stdout=json.dumps([other, sink]))):
+            self.assertEqual(audio.sink_for(CARD), sink)
+        with patch.object(audio, 'run', return_value=Mock(stdout=json.dumps([other]))):
+            with self.assertRaises(common.ToolError):
+                audio.sink_for(CARD)
+
     def fake_run(self, *args, **kwargs):
         if args[0]=='alsactl' and 'store' in args:
             Path(args[2]).write_text('SYNTHETIC ALSA STATE')

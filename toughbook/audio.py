@@ -37,7 +37,7 @@ def cards():
 
 def sink_for(device):
     sinks = json.loads(run('pactl', '--format=json', 'list', 'sinks').stdout)
-    found = [s for s in sinks if str(s.get('card')) == str(device['card_serial'])
+    found = [s for s in sinks if str(s.get('card', s.get('properties', {}).get('device.id'))) == str(device['card_serial'])
              and 'analog-stereo' in s['name']]
     if len(found) != 1:
         raise ToolError('Select the Analog Stereo output profile in desktop Sound settings, then retry.')
