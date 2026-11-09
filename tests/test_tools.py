@@ -231,15 +231,30 @@ class ScreenTransactionTests(TemporaryState):
 
 
 class AudioTransactionTests(TemporaryState):
-    def test_pipewire_sink_device_id_without_pulseaudio_card_field(self):
+    def test_pipewire_sink_uses_stable_name_when_card_field_absent(self):
         sink = {key: value for key, value in SINK.items() if key != 'card'}
-        sink['properties'] = {'device.id': str(CARD['card_serial'])}
-        other = {**sink, 'properties': {'device.id': '999'}}
+        sink['properties'] = {'device.id': '46', 'device.name': CARD['name']}
+        other = {**sink, 'properties': {'device.id': str(CARD['card_serial']), 'device.name': 'unrelated'}}
         with patch.object(audio, 'run', return_value=Mock(stdout=json.dumps([other, sink]))):
             self.assertEqual(audio.sink_for(CARD), sink)
         with patch.object(audio, 'run', return_value=Mock(stdout=json.dumps([other]))):
             with self.assertRaises(common.ToolError):
                 audio.sink_for(CARD)
+
+    def test_sink_card_field_takes_precedence_over_pipewire_properties(self):
+        sink = {**SINK, 'card': 999, 'properties': {'device.name': CARD['name']}}
+        with patch.object(audio, 'run', return_value=Mock(stdout=json.dumps([sink]))):
+            with self.assertRaises(common.ToolError):
+                audio.sink_for(CARD)
+
+    def test_pipewire_sink_missing_identity_or_duplicate_match_is_refused(self):
+        sink = {key: value for key, value in SINK.items() if key != 'card'}
+        for properties in ({'device.id': str(CARD['card_serial'])}, {'device.name': CARD['name']}):
+            matches = [{**sink, 'properties': properties}] * (2 if 'device.name' in properties else 1)
+            with self.subTest(properties=properties), patch.object(
+                    audio, 'run', return_value=Mock(stdout=json.dumps(matches))):
+                with self.assertRaises(common.ToolError):
+                    audio.sink_for(CARD)
 
     def fake_run(self, *args, **kwargs):
         if args[0]=='alsactl' and 'store' in args:

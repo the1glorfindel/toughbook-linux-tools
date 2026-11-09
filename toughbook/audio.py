@@ -37,8 +37,14 @@ def cards():
 
 def sink_for(device):
     sinks = json.loads(run('pactl', '--format=json', 'list', 'sinks').stdout)
-    found = [s for s in sinks if str(s.get('card', s.get('properties', {}).get('device.id'))) == str(device['card_serial'])
-             and 'analog-stereo' in s['name']]
+    # PipeWire device.id is an object ID, whereas pactl's card index is an
+    # object serial. They can coincide initially and diverge after a restart.
+    def belongs_to_card(sink):
+        if sink.get('card') is not None:
+            return str(sink['card']) == str(device['card_serial'])
+        return sink.get('properties', {}).get('device.name') == device['name']
+
+    found = [s for s in sinks if belongs_to_card(s) and 'analog-stereo' in s['name']]
     if len(found) != 1:
         raise ToolError('Select the Analog Stereo output profile in desktop Sound settings, then retry.')
     return found[0]
