@@ -122,13 +122,14 @@ class ReleaseTests(unittest.TestCase):
                     'docs/audio-fix.md'} <= names)
                 for member in members:
                     self.assertNotIn('__pycache__',member.name)
-                    self.assertFalse(member.name.endswith(('.alsa-state','.json')) or
+                    self.assertFalse((member.name.endswith(('.alsa-state','.json')) and not member.name.endswith('/gnome-extension/manual-keyboard@toughbook-tools/metadata.json')) or
                                      (member.name.endswith('.txt') and not member.name.endswith('/bundle/requirements.txt')))
                     self.assertEqual(member.uid,0)
                     self.assertEqual(member.mtime,0)
                     content=archive.extractfile(member).read()
                     self.assertNotIn(str(Path.home()).encode(),content)
                 extract=folder/'extracted with spaces'
+                self.assertIn('gnome-extension/manual-keyboard@toughbook-tools/extension.js', names)
                 archive.extractall(extract,filter='data')
             release=next(extract.iterdir())
             for name in ['calibrate-screen.py','fix-audio.py','toughbook-buttons.py','toughbook-tools.py', 'tools/setup-linux.py', 'tools/check-display.py']:

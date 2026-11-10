@@ -1,0 +1,6 @@
+{
+  "uuid": "manual-keyboard@toughbook-tools",
+  "name": "Toughbook manual keyboard",
+  "description": "Keep GNOME's on-screen keyboard under the accessibility toggle instead of automatically enabling it after touchscreen input.",
+  "shell-version": ["46"]
+}

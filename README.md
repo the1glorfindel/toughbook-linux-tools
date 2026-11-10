@@ -74,6 +74,8 @@ The optional tablet-button driver is separate. Setup does not install or load
 it. Add `--driver-prerequisites` to install its build packages and running-kernel
 headers, or use the Buttons page. Build-package installation may fail when
 matching headers are unavailable; ordinary app setup does not require headers.
+On GNOME 46, see the [optional manual keyboard extension](docs/gnome-keyboard.md)
+if the built-in keyboard appears automatically after finger touch in laptop use.
 If Secure Boot is enabled, follow the [signing guide](docs/driver-installation.md)
 before loading the driver, then enable the button helper in the Buttons page.
 

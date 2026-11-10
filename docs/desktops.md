@@ -77,6 +77,9 @@ the opened descriptor's driver name and ACPI ancestry. This prevents desktop
 defaults such as GNOME's `XF86Tools` shortcut from also opening Settings.
 Stopping the helper closes the descriptor and releases exclusive access.
 On GNOME, the Keyboard action toggles automatic on-screen-keyboard availability;
+GNOME 46 can also show the keyboard through its touch-mode path while that
+setting is off. See the [manual keyboard extension](gnome-keyboard.md) for an
+optional manual-only policy on this CF-19.
 touch a text-entry field with a finger to show it after enabling it.
 
 Actions run only for one identifiable, active, local, unlocked graphical login
