@@ -21,7 +21,11 @@ gnome-extensions install /tmp/manual-keyboard@toughbook-tools.shell-extension.zi
 
 Log out and back in if GNOME does not list the new extension immediately, then
 enable `manual-keyboard@toughbook-tools` using the Extensions app or
-`gnome-extensions enable manual-keyboard@toughbook-tools`. Set
+`gnome-extensions enable manual-keyboard@toughbook-tools`. If
+`gsettings get org.gnome.shell disable-user-extensions` reports `true`, enable
+user extensions with `gsettings set org.gnome.shell disable-user-extensions false`.
+Confirm `gnome-extensions info manual-keyboard@toughbook-tools` reports
+`State: ACTIVE`; an `Enabled: Yes` entry alone does not prove it is running. Set
 `screen-keyboard-enabled` to false for the default hidden state. Disable the
 extension to restore GNOME's automatic touchscreen behavior. A GNOME Shell
 upgrade requires rechecking the extension against the new Shell version.
