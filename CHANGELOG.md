@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — validation status update
+
+- Record the local portable build, clean-container runtime, native X11 GUI and
+  isolated installation checks.
+- Record confirmed Ubuntu source-installation reboot persistence, post-reboot
+  speaker/button inputs and 14.07-pixel maximum finger error.
+- Document the prior unexplained matrix reset, restored helper after the isolated
+  uninstall check, and remaining stable portable-release acceptance work.
+
+
 ## Unreleased — Ubuntu GNOME X11 hardware fixes
 
 - Preserve the GUI-capable Python interpreter across app and button installation.

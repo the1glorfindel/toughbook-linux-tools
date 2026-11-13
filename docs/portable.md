@@ -77,3 +77,21 @@ workflow does not claim byte-identical container or runtime builds.
 Validation must include clean-host imports, relocated installation/helper paths,
 and the native display smoke checks for both X11 and Wayland. Physical CF-19
 calibration, sound, buttons and kernel builds remain separate acceptance checks.
+
+
+## Current validation status
+
+A local 0.2.0 runtime built from `3f4770f` passed the clean-container import/client
+checks, archive and file hashes, native Ubuntu GNOME X11 GUI smoke check, and
+isolated installation, relocation, upgrade and uninstall checks. The user confirmed
+speaker samples from its bundled audio client. Its button monitor received all
+four physical press/release pairs through the existing source helper.
+
+The full reboot and physical finger accuracy results apply to the existing source
+installation. They do not validate a portable helper replacement. The isolated
+uninstall test briefly stopped that source helper through the real user manager;
+it was restored. Temporary XDG paths alone do not isolate systemd user services.
+
+This is preview-release evidence. Native GNOME Wayland, suspend/resume, live
+portable helper migration/actions and portable login persistence remain pending.
+See [validation results](VALIDATION.md) for measurements and remaining scope.

@@ -3,8 +3,8 @@
 For shared Debian/Ubuntu, Fedora and Arch setup, start with
 [Linux installation and compatibility](linux.md).
 
-Ubuntu support is prepared for the same CF-19 Mk6 hardware as the Fedora
-release. Specific Ubuntu 24.04 GNOME X11 hardware checks are recorded in
+Ubuntu has live validation on the same CF-19 Mk6 hardware as the Fedora
+implementation. Specific Ubuntu 24.04 GNOME X11 hardware checks are recorded in
 [validation status](VALIDATION.md); clean setup, DKMS and other Ubuntu sessions
 still need acceptance testing. Use a local Wayland or X11 graphical session. See [desktop compatibility](desktops.md)
 for common calibration and dedicated-device button delivery. Other CF-19 revisions
@@ -71,3 +71,17 @@ the installed profile format before changing audio settings.
 
 Keep the Fedora installation and its saved backups available until Ubuntu's
 display, audio, button, suspend, and login behavior has been checked in person.
+
+
+## Current reference-device results
+
+Ubuntu 24.04.4 GNOME 46 X11 on CF-192NYZX1M passed a full reboot/login check:
+saved finger calibration applied automatically and the source button helper
+started without error. The user confirmed both speaker samples and all four
+physical button press/release pairs after reboot. Finger verification measured
+14.07 pixels maximum error, below the 20-pixel limit.
+
+A prior live-matrix reset required reapplying the intact saved calibration; its
+cause remains unknown. Suspend/resume and native GNOME Wayland remain untested
+in this retest. Portable packaging/X11 smoke checks passed separately; the portable
+helper has not replaced the source installation. See [validation status](VALIDATION.md).

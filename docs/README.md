@@ -28,6 +28,11 @@ its launcher is `./toughbook-tools` with the same application options.
 - [Tablet-button driver](driver-installation.md): missing ACPI binding, exact
   Mk6 firmware mapping, Debian/Fedora/Arch DKMS setup, Secure Boot, and driver recovery.
 
+The current build is ready for preview testing. Ubuntu GNOME X11 source
+installation reboot, physical finger, speaker and button-input checks passed;
+portable Wayland, helper migration and suspend/resume checks remain pending.
+See the validation record below for the exact scope.
+
 ## Project notes
 
 - [Validation and release status](VALIDATION.md): automated and physical

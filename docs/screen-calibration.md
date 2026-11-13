@@ -72,8 +72,12 @@ the previous activation record. For window managers without XDG autostart, run
 changed display layout; return to the original normal layout first.
 
 The Rotation button's X11 backend composes output orientation with the existing
-finger transform and attempts to restore both if a change fails. New X11 paths
-have automated coverage; physical acceptance remains pending.
+finger transform and attempts to restore both if a change fails. Ubuntu GNOME X11
+has physical rotation and calibration evidence. A full reboot/login restored the
+saved matrix automatically; post-reboot finger error was at most 14.07 pixels
+against a 20-pixel limit. An earlier unexplained live-matrix reset was corrected
+by reapplying the intact saved calibration. Other desktops and suspend/resume
+still need checks; see [validation results](VALIDATION.md).
 
 ## Common libinput Wayland calibration
 

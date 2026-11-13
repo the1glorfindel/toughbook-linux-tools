@@ -16,6 +16,20 @@ Other CF-19 revisions, the active Wacom pen, other touch controllers, and
 other audio codecs are outside the tested scope. The detailed
 [documentation index](docs/README.md) explains each issue and its recovery path.
 
+## Current release and testing status
+
+The current build is ready for preview testing; stable portable-release acceptance
+is incomplete. On the reference CF-19, Ubuntu 24.04.4 GNOME 46 X11 checks confirm
+internal-speaker playback, all four button inputs, and saved touch calibration
+and helper startup after a full reboot. Post-reboot finger verification measured
+14.07 pixels maximum error against a 20-pixel limit.
+
+The portable 0.2.0 build passed clean-container runtime checks, native X11 GUI
+checks, and isolated install/upgrade/uninstall checks. The reboot checks used the
+existing source installation, not a portable replacement. Native GNOME Wayland,
+suspend/resume, and live portable helper migration/action checks remain pending.
+See [validation and release status](docs/VALIDATION.md) for scope and remaining work.
+
 ## Portable app (no Python installation)
 
 The portable x86_64 package includes Python, Qt, D-Bus bindings and the native

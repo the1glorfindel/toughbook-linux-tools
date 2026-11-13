@@ -8,9 +8,10 @@ with Fedora 44 KDE Wayland, a Wacom ISDv4 93 finger sensor (`056a:0093`, interfa
 restart and a second affirmative listening result. That evidence establishes the
 workarounds; it does not validate every path in this public-release refactor.
 
-The reference installation remains untouched during release preparation. No
-public-release script was applied to its live desktop, audio configuration, or
-udev rules. GNOME Shell is not installed in the diagnostic environment.
+The early Fedora release-preparation checks used an isolated diagnostic
+environment. Later Ubuntu checks below used the live reference Toughbook,
+including its GNOME Shell session. Those later results supersede the earlier
+isolation limits only for the explicitly recorded checks.
 
 Initial Ubuntu compatibility preparation had no live installation evidence.
 The Ubuntu GNOME X11 section below now records specific hardware checks,
@@ -43,7 +44,7 @@ The archive builder uses an allowlist of source, tests, and docs. It excludes
 bytecode, runtime state, private logs, old prototypes, and Git metadata, normalizes
 archive ownership and timestamps, and emits a SHA-256 checksum beside the archive.
 
-## Physical acceptance checklist — pending for the public refactor
+## Physical acceptance checklist — remaining scope varies by platform
 
 Use a separate vanilla Debian, Ubuntu, Fedora or Arch installation or backup first. Record the distribution,
 KWin/GNOME, PipeWire/WirePlumber, and kernel versions plus CF-19 revision and
@@ -291,7 +292,58 @@ Toughbook. Earlier revisions were tested and corrected during the same session:
   The final installed `9a442ee` GUI also rendered all four pages through `xcb`
   and shut down cleanly. No requested physical confirmations remained pending.
 
-Reboot/login persistence, suspend/resume, VT switching and ACL revocation,
-headphone insertion/removal and complete audio restore on this Ubuntu installation
-remain separate acceptance work. These checks do not validate native GNOME
-Wayland, additional CF-19 revisions or newly built portable binaries.
+At the end of the November 9 session, reboot/login persistence, suspend/resume,
+VT switching and ACL revocation, headphone insertion/removal and complete audio
+restore remained pending. The later checks below supersede the reboot/login item
+for the existing Ubuntu source installation only.
+
+
+## Portable build and Ubuntu retest (2026-11-10 to 2026-11-12)
+
+Current status: suitable for a preview release, with stable portable acceptance
+still incomplete. These checks used Panasonic CF-192NYZX1M, Ubuntu 24.04.4 LTS,
+GNOME Shell 46 native X11, and kernel `6.17.0-23-generic`. The portable 0.2.0
+runtime was built from `3f4770f` using rootless Podman and Debian 12, with Python
+3.11.2 and Qt/PySide 6.12.0. Build outputs remain local; this record does not
+assert publication or tagging of a release.
+
+| Check | Result and scope |
+| --- | --- |
+| Automated suite | 158 tests passed; 11 release checks also passed after source packaging. |
+| Source archive and GNOME extension | Built; source checksum and extension ZIP integrity verified. |
+| Kernel driver | Module compiled for `6.17.0-23-generic`; the newly built module was not loaded. This does not validate fresh DKMS installation or Secure Boot signing. |
+| Portable packaging | Runtime and matching dependency-source archives built; archive checksums and extracted runtime file hashes passed. |
+| Clean-container runtime | Imports and bundled native-client checks passed without system Python and with networking disabled. |
+| Native portable X11 GUI | `xcb`, 1024×768 at scale 1; nine synthetic touches within one pixel, preview acceptance, all four pages, and clean shutdown passed. |
+| Isolated portable installation | Install, relocation into paths with spaces, upgrade from the installed copy, uninstall, and retained settings passed. No existing helper was migrated in this check. |
+| Speaker playback | User heard both left/right samples played with the portable audio client, including after reboot. |
+| Physical button input | Portable monitor captured named press/release pairs for Keyboard, Circle, Rotation, and Key before and after reboot, through the existing source helper. Actions were paused during identification and restored afterward. |
+| Source installation reboot/login | Changed kernel boot ID confirmed a full reboot. Saved calibration matched live XInput automatically, the source helper started without error, and configuration files were unchanged. |
+| Physical finger verification | Existing calibration measured 11.44 pixels maximum error before reboot and 14.07 after reboot; both passed the 20-pixel gate. Measurements used a source Qt target harness, not the portable GUI's calibration workflow. |
+
+Before the successful pre-reboot finger test, the live XInput matrix was identity
+while the saved calibration remained intact. Maximum error was 75.00 pixels.
+Reapplying the saved matrix with the portable `--tool screen --activate` command
+restored accuracy. The reset cause is unknown. The subsequent full reboot restored
+the saved matrix automatically, but one successful reboot does not rule out an
+intermittent reset.
+
+The isolated uninstall check briefly stopped the real source helper because
+`systemctl --user` still addressed the live user manager despite temporary XDG
+paths and an isolated D-Bus address. The helper was restarted and verified active
+with empty error status and `paused=false`. Installation checks therefore establish
+file relocation/settings behavior, not complete service isolation.
+
+### Remaining acceptance work
+
+- Native GNOME Wayland portable GUI and physical hardware checks; earlier isolated
+  source Wayland smoke results do not establish portable GNOME Wayland acceptance.
+- Suspend/resume, VT switching and input ACL revocation.
+- Live source-to-portable helper migration, assigned actions with the portable
+  helper, and portable installation reboot/login persistence.
+- Headphone insertion/removal, complete audio restore, fresh distribution setup,
+  DKMS/signing, and additional desktops or hardware revisions.
+- Repeat persistence checks if the unexplained live-matrix reset recurs.
+
+The November 9 physical assigned-action results still apply to that source
+installation; the later identification tests do not repeat those action checks.
