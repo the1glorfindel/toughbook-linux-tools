@@ -279,7 +279,7 @@ class PortableCalibrationTests(unittest.TestCase):
                 return Mock(run=Mock(return_value=True))
             stack.enter_context(patch.object(screen, 'CalibrationWindow', side_effect=window))
             with self.assertRaises(OSError):
-                screen.main([])
+                screen.main(['--session-only'])
             live.restore.assert_called_once()
             self.assertEqual(load_json(Path(folder)/'screen.json')['status'], 'cancelled')
 

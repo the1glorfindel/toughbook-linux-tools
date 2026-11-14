@@ -216,3 +216,32 @@ class SystemTouchTests(TemporaryState):
         with patch.object(system,'change_files') as write:
             with self.assertRaisesRegex(ToolError,'Unknown touch guard'):system.apply(self.path,'sudo')
             write.assert_not_called()
+
+    def test_default_and_explicit_system_measurement_dispatch(self):
+        for args in ([],['--system-wide']):
+            with patch.object(screen,'desktop_user'),patch.object(screen,'require'),patch.object(screen,'check_model'),patch.object(screen,'touch_devices',return_value=[DEVICE]),patch.object(system,'measure',return_value=self.path) as measure:
+                self.assertEqual(screen.main(args),0)
+                measure.assert_called_once_with(DEVICE,'x11',(1024,768))
+
+    def test_verify_does_not_measure(self):
+        save_json(self.path,{'kind':'screen','backend':'system','identity':IDENTITY})
+        with patch.object(screen,'desktop_user'),patch.object(screen,'require'),patch.object(screen,'check_model'),patch.object(system,'verify',return_value=0) as verify,patch.object(system,'measure') as measure:
+            self.assertEqual(screen.main(['--verify',str(self.path)]),0)
+            verify.assert_called_once();measure.assert_not_called()
+
+    def test_measurement_modes_are_mutually_exclusive(self):
+        with self.assertRaises(SystemExit):screen.main(['--system-wide','--session-only'])
+
+    def test_gui_advanced_and_backup_filtering(self):
+        from PySide6.QtWidgets import QApplication
+        from toughbook.screen_gui import ScreenPage
+        app=QApplication.instance() or QApplication([])
+        self.make()
+        with patch('toughbook.screen_gui.state_dir',return_value=self.root),patch.object(ScreenPage,'refresh'):
+            page=ScreenPage()
+        self.assertTrue(page.advanced_options.isHidden())
+        self.assertFalse(page.legacy_backups.isChecked())
+        self.assertEqual(page.session_button.text(),'Desktop-session calibration (legacy)')
+        with patch.object(page,'start_session'),patch.object(page,'_candidate_operation') as op:
+            page.start_button.click();op.assert_called_once_with('--system-wide')
+        page.close()

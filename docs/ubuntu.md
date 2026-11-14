@@ -87,7 +87,7 @@ in this retest. Portable packaging/X11 smoke checks passed separately; the porta
 helper has not replaced the source installation. See [validation status](VALIDATION.md).
 
 
-The app's **Calibrate for login and desktop** workflow now installs the narrow
+The app's **Calibrate finger touch** workflow now installs the narrow
 libinput rule and finger-only Xorg driver selection tested in the device pilot.
 It includes reboot verification, backup/restore, and migration away from the old
 per-user activation. Follow [system-wide calibration](screen-calibration.md#system-wide-login-and-desktop-calibration);

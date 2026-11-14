@@ -31,7 +31,7 @@ portable suspend/resume, and live portable helper migration/action checks remain
 A separate system-wide libinput finger-calibration pilot passed boot-time login,
 lock-screen accuracy, suspend/resume, all four rotations and pen/eraser regression
 checks on this device. Its nine-target maximum error was 9.63 pixels. The app now provides a
-**Calibrate for login and desktop** workflow for system-wide libinput calibration
+**Calibrate finger touch** workflow for system-wide libinput calibration
 on Ubuntu and Fedora, with installation, reboot verification and restore.
 The integrated workflow still needs physical acceptance on both distributions;
 the device pilot validated the underlying configuration.
@@ -102,7 +102,7 @@ before loading the driver, then enable the button helper in the Buttons page.
 
 For calibration on both the login screen and desktop, choose **Calibrate for
 login and desktop** on the Finger touch page. Save the candidate, select it, use
-**Apply candidate**, reboot, then select **Verify after login**. Administrator
+**Apply candidate**, reboot, then select **Verify after reboot**. Administrator
 authorization is requested only when installing/restoring system configuration.
 See [system-wide calibration](docs/screen-calibration.md#system-wide-login-and-desktop-calibration).
 

@@ -224,9 +224,9 @@ class ScreenTransactionTests(TemporaryState):
                                     ('CalibrationWindow',window)]:
                     stack.enter_context(patch.object(screen,name,value))
                 if fail:
-                    with self.assertRaises(common.ToolError): screen.main([])
+                    with self.assertRaises(common.ToolError): screen.main(['--session-only'])
                 else:
-                    self.assertEqual(screen.main([]),2)
+                    self.assertEqual(screen.main(['--session-only']),2)
                 kwin.restore.assert_called_once()
 
 

@@ -86,7 +86,7 @@ udev rule. A running Mutter interface can supply display layout; other composito
 use native Qt. Measuring/saving a candidate does not change live input.
 
 In the GUI, save the candidate, select it below, choose **Apply candidate**, approve
-the administrator prompt, log out/in and use **Verify after login**. GUI
+the administrator prompt, log out/in and use **Verify after reboot**. GUI
 verification uses native Qt and does not require XWayland. The CLI prints
 the equivalent commands:
 
@@ -168,10 +168,10 @@ on Ubuntu and Fedora remains pending.
 
 ## System-wide login and desktop calibration
 
-Use **Calibrate for login and desktop** on the Finger touch page. It measures a
+Use **Calibrate finger touch** on the Finger touch page. It measures a
 candidate without changing live input. Save it, select the new backup, choose
 **Apply candidate**, and authorize installation. Reboot, select the same backup,
-and use **Verify after login**. Also check touch at the actual login screen.
+and use **Verify after reboot**. Also check touch at the actual login screen.
 Verification requires a new boot, the expected rule and live driver calibration,
 and physical targets within the existing 20-pixel maximum-error limit.
 
@@ -224,3 +224,11 @@ When driver calibration is active, legacy X11 measurement and restore are refuse
 and legacy `--activate` skips applying a second matrix. After a new system
 calibration, use this system workflow to recalibrate. It composes measured
 correction with the effective driver/display calibration exactly once.
+
+
+System-wide measurement is the default for `python3 calibrate-screen.py`;
+`--system-wide` remains an explicit alias. Legacy desktop-session calibration is
+available only under collapsed **Advanced options**, or with `--session-only`.
+It does not calibrate the boot-time login screen. **Include legacy backups**
+reveals older recovery entries; system backups are shown by default. Advanced
+options retain the same double-calibration guards as other entry points.

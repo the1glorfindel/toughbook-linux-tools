@@ -230,15 +230,33 @@ class ScreenPage(QWidget):
         layout.addWidget(QLabel('Before calibrating: use only the internal display, normal orientation, and 100% scale.'))
         buttons = QHBoxLayout()
         self.start_button = QPushButton('Calibrate finger touch')
-        self.start_button.clicked.connect(self.start)
+        self.start_button.clicked.connect(lambda: self._candidate_operation('--system-wide'))
         buttons.addWidget(self.start_button)
-        system_button = QPushButton('Calibrate for login and desktop')
-        system_button.clicked.connect(lambda: self._candidate_operation('--system-wide'))
-        buttons.addWidget(system_button)
         self.refresh_button = QPushButton('Refresh status')
         self.refresh_button.clicked.connect(self.refresh)
         buttons.addWidget(self.refresh_button)
         layout.addLayout(buttons)
+        advanced = QPushButton('Advanced options')
+        advanced.setCheckable(True)
+        layout.addWidget(advanced)
+        self.advanced_options = QWidget()
+        advanced_layout = QVBoxLayout(self.advanced_options)
+        note = QLabel('Legacy desktop-session calibration does not calibrate the boot-time login screen. It may install per-user login activation.')
+        note.setWordWrap(True)
+        advanced_layout.addWidget(note)
+        self.session_button = QPushButton('Desktop-session calibration (legacy)')
+        self.session_button.clicked.connect(self.start_session)
+        advanced_layout.addWidget(self.session_button)
+        self.legacy_backups = QPushButton('Include legacy backups')
+        self.legacy_backups.setCheckable(True)
+        self.legacy_backups.toggled.connect(lambda _: self.refresh())
+        advanced_layout.addWidget(self.legacy_backups)
+        self.advanced_options.hide()
+        advanced.toggled.connect(self.advanced_options.setVisible)
+        layout.addWidget(self.advanced_options)
+        instructions = QLabel('Measure and save a candidate, apply it with administrator authorization, reboot, then verify.')
+        instructions.setWordWrap(True)
+        layout.addWidget(instructions)
         layout.addWidget(QLabel('Saved calibration backups'))
         self.backups = QListWidget()
         layout.addWidget(self.backups)
@@ -250,14 +268,14 @@ class ScreenPage(QWidget):
         browse.clicked.connect(self.restore_file)
         recovery.addWidget(browse)
         apply = QPushButton('Apply candidate…')
-        verify = QPushButton('Verify after login')
+        verify = QPushButton('Verify after reboot')
         apply.clicked.connect(lambda: self._candidate_operation('--apply'))
         verify.clicked.connect(lambda: self._candidate_operation('--verify'))
         recovery.addWidget(apply)
         recovery.addWidget(verify)
         layout.addLayout(recovery)
         layout.addStretch()
-        self._buttons = [self.start_button, system_button, self.refresh_button, self.restore_button, browse, apply, verify]
+        self._buttons = [self.start_button, self.session_button, self.legacy_backups, self.refresh_button, self.restore_button, browse, apply, verify]
         self.refresh()
 
     def _set_busy(self, busy):
@@ -285,6 +303,8 @@ class ScreenPage(QWidget):
         for path in sorted(state_dir(create=False).glob('screen-*.json'), reverse=True):
             try:
                 data = load_json(path, 'screen')
+                if data.get('backend') != 'system' and not self.legacy_backups.isChecked():
+                    continue
                 self.backups.addItem(f'{path.name} — {data.get("status", "unknown")}')
                 self.backups.item(self.backups.count() - 1).setData(Qt.ItemDataRole.UserRole, str(path))
             except (ValueError, OSError, KeyError, ToolError):
@@ -313,7 +333,7 @@ class ScreenPage(QWidget):
         process.finished.connect(finished)
         process.start()
 
-    def start(self):
+    def start_session(self):
         if self._busy:
             return
         self._set_busy(True)

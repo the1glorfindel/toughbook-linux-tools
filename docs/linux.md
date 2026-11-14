@@ -150,7 +150,7 @@ own kernel/firmware setup. Never assume a DKMS-generated key is already trusted.
 ## System-wide finger calibration dependencies
 
 Setup installs `xserver-xorg-input-libinput` on Ubuntu/Debian and
-`xorg-x11-drv-libinput` on Fedora for the app's **Calibrate for login and desktop**
+`xorg-x11-drv-libinput` on Fedora for the app's **Calibrate finger touch**
 workflow. Rerun setup after updating an older checkout. See
 [calibration and restore](screen-calibration.md#system-wide-login-and-desktop-calibration)
 for administrator authorization, reboot requirements and migration behavior.

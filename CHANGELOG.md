@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — one default calibration workflow
+
+- Default GUI and CLI calibration to system-wide login/desktop correction.
+- Move legacy desktop-session calibration and backup visibility under Advanced
+  options; require `--session-only` for legacy CLI measurement.
+
+
 ## Unreleased — system-wide finger calibration
 
 - Add GUI/CLI measurement, installation, reboot verification and restore for

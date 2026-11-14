@@ -416,6 +416,7 @@ def main(argv=None):
     group.add_argument('--restore', metavar='BACKUP', help='Restore saved calibration')
     group.add_argument('--activate', action='store_true', help='Restore saved X11 calibration at login')
     group.add_argument('--system-touch-helper', metavar='REQUEST', help=argparse.SUPPRESS)
+    group.add_argument('--session-only', action='store_true', help='Advanced: legacy desktop-session calibration; does not calibrate the boot-time login screen')
     group.add_argument('--system-wide', action='store_true', help='Measure a libinput candidate for login and desktop calibration; installation requires reboot')
     parser.add_argument('--qt', action='store_true', help='Use native Qt for verification targets')
     parser.add_argument('--pkexec', action='store_true', help='Use graphical authorization for system rules')
@@ -444,7 +445,7 @@ def main(argv=None):
         apply_pending(args.apply, privilege=privilege)
         return 0
     output, width, height = layout(backend)
-    if args.system_wide:
+    if args.system_wide or (not args.session_only and not args.verify):
         from .system_touch import measure
         device = choose(touch_devices(), 'event', args.device)
         path = measure(device, backend, (width, height))
