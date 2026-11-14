@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Ubuntu preview readiness
+
+- State Ubuntu GNOME X11/Wayland source preview readiness on the tested CF-19 Mk6.
+- Clarify remaining stable-release gates and that existing local portable
+  artifacts predate the current calibration integration.
+
+
 ## Unreleased — Ubuntu GNOME Wayland validation
 
 - Record native source GUI, finger accuracy, speaker playback, button actions,

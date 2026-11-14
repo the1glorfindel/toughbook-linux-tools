@@ -1,5 +1,31 @@
 # Validation and release status
 
+## Current Ubuntu release readiness
+
+The source app is ready for an Ubuntu preview release on the reference CF-19 Mk6
+with Ubuntu 24.04.4 GNOME X11 or native Wayland. This is readiness to publish a
+preview, not a record that a release/tag or binary has been published.
+
+Native Wayland physical checks cover finger accuracy (18.89-pixel maximum error),
+speaker playback, four-button input and assigned actions, rotation in all four
+orientations, lock/unlock and suspend/resume. X11 checks and their measurements
+are recorded below. The libinput device pilot validated the underlying system
+configuration; it does not substitute for physical acceptance of the integrated
+app's install/verify/restore sequence.
+
+Stable Ubuntu release gates remain:
+
+- End-to-end app-managed system calibration installation, reboot verification and
+  restore, including recovery from cancellation or failed installation.
+- Clean Ubuntu setup acceptance, including optional DKMS/Secure Boot where claimed.
+- Rebuild the portable executable from current source and validate its native
+  display, installation/helper migration, hardware actions and persistence paths.
+
+Existing local portable artifacts predate the system-wide calibration integration
+and default-workflow changes. Their successful earlier checks apply to those
+artifacts only. Fedora, additional Ubuntu desktops and other hardware retain the
+separate acceptance limits documented below.
+
 ## Evidence already available
 
 The original implementations were confirmed by a user on a Panasonic CF-19 Mk6

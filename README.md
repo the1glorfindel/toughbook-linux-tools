@@ -18,13 +18,16 @@ other audio codecs are outside the tested scope. The detailed
 
 ## Current release and testing status
 
-The current build is ready for preview testing; stable portable-release acceptance
-is incomplete. On the reference CF-19, Ubuntu 24.04.4 GNOME 46 X11 checks confirm
+**Ubuntu preview status:** the source app is ready for a preview release on the
+tested CF-19 Mk6 with Ubuntu 24.04.4 GNOME X11 or native Wayland. Stable-release
+acceptance is incomplete. On the reference CF-19, Ubuntu 24.04.4 GNOME 46 X11 checks confirm
 internal-speaker playback, all four button inputs, and saved touch calibration
 and helper startup after a full reboot. Post-reboot finger verification measured
 14.07 pixels maximum error against a 20-pixel limit.
 
-The portable 0.2.0 build passed clean-container runtime checks, native X11 GUI
+The existing local portable 0.2.0 build predates the current calibration
+integration and must be rebuilt before distributing the current feature set. That
+earlier build passed clean-container runtime checks, native X11 GUI
 checks, and isolated install/upgrade/uninstall checks. The reboot checks used the
 existing source installation, not a portable replacement. Native GNOME Wayland
 source-app checks have now passed; portable Wayland, portable suspend/resume,
@@ -36,7 +39,10 @@ checks on this device. Its nine-target maximum error was 9.63 pixels. The app no
 on Ubuntu and Fedora, with installation, reboot verification and restore.
 The integrated workflow still needs physical acceptance on both distributions;
 the device pilot validated the underlying configuration.
-See [validation and release status](docs/VALIDATION.md) for scope and remaining work.
+Stable-release gates include end-to-end app-managed calibration installation
+and restore, clean Ubuntu setup, and a rebuilt/revalidated portable executable.
+This preview status does not announce a published release or broaden hardware
+support. See [validation and release status](docs/VALIDATION.md) for details.
 
 On this reference Toughbook, the user reports a smoother on-screen keyboard and
 instant screen rotation without the blanking seen on Xorg when using GNOME

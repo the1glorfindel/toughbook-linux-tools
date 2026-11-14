@@ -10,6 +10,15 @@ still need acceptance testing. Use a local Wayland or X11 graphical session. See
 for common calibration and dedicated-device button delivery. Other CF-19 revisions
 remain outside the tested hardware scope.
 
+## Release readiness
+
+The tested Ubuntu 24.04.4 GNOME X11 and native Wayland source installation is
+ready for a preview release on the reference CF-19 Mk6. Stable release acceptance
+still requires clean setup, the integrated app's complete calibration install and
+restore cycle, and a rebuilt/revalidated portable executable. Current local
+portable artifacts predate the calibration integration. See
+[release gates and evidence](VALIDATION.md#current-ubuntu-release-readiness).
+
 ## Install
 
 From a fresh Ubuntu desktop, as the logged-in user:

@@ -1,5 +1,14 @@
 # Portable runtime
 
+## Artifact status
+
+The existing local 0.2.0 runtime predates the app's system-wide calibration
+integration and default-workflow changes. Rebuild it from current source before
+claiming those features in a portable release. Its earlier X11/runtime checks do
+not validate the newer code. Current Ubuntu preview readiness applies to the
+tested source app; stable portable acceptance remains pending. See
+[release gates](VALIDATION.md#current-ubuntu-release-readiness).
+
 The x86_64 portable archive contains the Python interpreter, PySide6/Qt with
 native X11 and Wayland plugins, D-Bus Python bindings, GLib/Gio introspection,
 Tcl/Tk, and the userspace clients used by the fixes: pactl, pw-play, amixer,
