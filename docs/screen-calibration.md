@@ -152,3 +152,18 @@ See [desktop compatibility](desktops.md) and [validation status](VALIDATION.md).
 Sources: [KWin device implementation](https://github.com/KDE/kwin/blob/master/src/backends/libinput/device.cpp),
 [libinput udev defaults](https://wayland.freedesktop.org/libinput/doc/latest/device-configuration-via-udev.html),
 [XInput](https://www.x.org/releases/current/doc/man/man1/xinput.1.xhtml).
+
+
+## System-wide libinput pilot
+
+The reference Ubuntu X11 device passed a local trial that stores sensor correction
+in a udev libinput default and switches only the finger interface to the Xorg
+libinput driver. Login, lock, suspend and rotation checks passed without the local
+guard; physical finger error was at most 9.63 pixels. Pen/eraser behavior was
+confirmed unchanged. See [validation results](VALIDATION.md).
+
+This trial is not integrated into the app yet. Do not run the existing X11
+calibration or `--activate` workflow on that configuration: it can add the saved
+correction again above the driver correction. Use the trial's retained rollback
+script and reboot before returning to the old workflow. The app's existing
+Wayland rule workflow does not automatically migrate an X11 installation.

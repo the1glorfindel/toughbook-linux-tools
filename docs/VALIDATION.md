@@ -338,7 +338,8 @@ file relocation/settings behavior, not complete service isolation.
 
 - Native GNOME Wayland portable GUI and physical hardware checks; earlier isolated
   source Wayland smoke results do not establish portable GNOME Wayland acceptance.
-- Suspend/resume, VT switching and input ACL revocation.
+- Portable suspend/resume, VT switching and input ACL revocation; the later
+  local source and libinput-pilot suspend checks are recorded below.
 - Live source-to-portable helper migration, assigned actions with the portable
   helper, and portable installation reboot/login persistence.
 - Headphone insertion/removal, complete audio restore, fresh distribution setup,
@@ -347,3 +348,47 @@ file relocation/settings behavior, not complete service isolation.
 
 The November 9 physical assigned-action results still apply to that source
 installation; the later identification tests do not repeat those action checks.
+
+
+## System-wide libinput finger pilot (2026-11-14)
+
+A reversible local configuration trial on the reference Ubuntu GNOME X11 CF-19
+moved the saved sensor correction from XInput's coordinate transform into
+`LIBINPUT_CALIBRATION_MATRIX`. A narrowly matched udev rule selects only the
+`056a:0093` finger interface `01`, serial and physical path, and clears its
+conflicting tablet classification. A late Xorg InputClass selects libinput for
+`Wacom ISDv4 93 Finger`; pen and eraser retain the Wacom driver. The kernel
+product name lacks the driver's former `touch` suffix; an initial Xorg rule using
+that suffix did not match and was corrected before this trial.
+
+Xorg logs from both GDM and the desktop confirm the finger driver selection.
+The active and default libinput matrices match the saved calibration, while the
+XInput coordinate transform is identity in normal landscape. The old calibration
+startup entries and local reset guard are disabled, preventing double correction.
+The original Xorg TransformationMatrix-only workaround had loaded but was later
+overwritten; that startup-only approach did not resolve the resets.
+
+Confirmed pilot results:
+
+- User reported accurate touch on the boot-time login screen and lock screen.
+  Reaching the password field with touch and on-screen keyboard availability were
+  not separately recorded as acceptance results.
+- Journal evidence confirms suspend/resume; both matrices remained unchanged,
+  the button helper remained active and the guard remained inactive. The user
+  confirmed accurate touch after waking.
+- User confirmed accurate touch in all four button-driven orientations. Returning
+  to landscape restored the identity coordinate transform and retained the
+  libinput correction.
+- A source Qt verification harness measured nine physical finger targets at
+  1024x768: maximum error 9.63 pixels, passing the existing 20-pixel gate. The
+  user accepted the result; no calibration was changed by this measurement.
+- User confirmed pen/eraser behavior functioned as intended after the trial.
+
+The device trial passed these checks without a custom kernel module or calibration
+watchdog. This is not yet a supported app installation mode. Existing X11
+calibration, activation and restore workflows need explicit awareness of driver
+calibration before they can safely manage this configuration. Native Wayland,
+portable integration, broader hardware and repeated-cycle endurance remain
+unvalidated by this pilot. Backups and install/rollback scripts are retained
+locally outside the repository; no pilot artifacts or user identities are packaged
+in a release.

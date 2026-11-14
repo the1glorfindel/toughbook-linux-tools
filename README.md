@@ -27,7 +27,12 @@ and helper startup after a full reboot. Post-reboot finger verification measured
 The portable 0.2.0 build passed clean-container runtime checks, native X11 GUI
 checks, and isolated install/upgrade/uninstall checks. The reboot checks used the
 existing source installation, not a portable replacement. Native GNOME Wayland,
-suspend/resume, and live portable helper migration/action checks remain pending.
+portable suspend/resume, and live portable helper migration/action checks remain pending.
+A separate system-wide libinput finger-calibration pilot passed boot-time login,
+lock-screen accuracy, suspend/resume, all four rotations and pen/eraser regression
+checks on this device. Its nine-target maximum error was 9.63 pixels. This pilot
+is not yet integrated into the app; do not use the existing calibration workflow
+on a pilot installation because it can apply correction twice.
 See [validation and release status](docs/VALIDATION.md) for scope and remaining work.
 
 ## Portable app (no Python installation)
