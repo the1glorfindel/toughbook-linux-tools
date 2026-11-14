@@ -232,6 +232,9 @@ class ScreenPage(QWidget):
         self.start_button = QPushButton('Calibrate finger touch')
         self.start_button.clicked.connect(self.start)
         buttons.addWidget(self.start_button)
+        system_button = QPushButton('Calibrate for login and desktop')
+        system_button.clicked.connect(lambda: self._candidate_operation('--system-wide'))
+        buttons.addWidget(system_button)
         self.refresh_button = QPushButton('Refresh status')
         self.refresh_button.clicked.connect(self.refresh)
         buttons.addWidget(self.refresh_button)
@@ -254,7 +257,7 @@ class ScreenPage(QWidget):
         recovery.addWidget(verify)
         layout.addLayout(recovery)
         layout.addStretch()
-        self._buttons = [self.start_button, self.refresh_button, self.restore_button, browse, apply, verify]
+        self._buttons = [self.start_button, system_button, self.refresh_button, self.restore_button, browse, apply, verify]
         self.refresh()
 
     def _set_busy(self, busy):
@@ -297,7 +300,7 @@ class ScreenPage(QWidget):
             if code == 0:
                 try:
                     data = json.loads(output)
-                    self.status_label.setText(f'{data["backend"].upper()} · {len(data["devices"])} eligible finger device(s)')
+                    self.status_label.setText(f'{data["backend"].upper()} · {len(data["devices"])} eligible finger device(s)' + (' · system rule installed' if data.get('system_calibration', {}).get('rule_installed') else ''))
                     self.device_combo.clear()
                     for device in data['devices']:
                         self.device_combo.addItem(device['event'], device['event'])
@@ -426,7 +429,7 @@ class ScreenPage(QWidget):
         if self._status_process and self._status_process.state() != QProcess.ProcessState.NotRunning:
             self._status_process.kill()
         if self._operation_process and self._operation_process.state() != QProcess.ProcessState.NotRunning:
-            if self._operation_process.property('operation') == '--verify':
+            if self._operation_process.property('operation') in ('--verify', '--system-wide'):
                 self._operation_process.terminate()
             return
         self._rollback()
@@ -476,13 +479,13 @@ class ScreenPage(QWidget):
         if self._busy:
             return
         item = self.backups.currentItem()
-        if not item:
+        if not item and flag != '--system-wide':
             self.log.emit('Select a saved libinput candidate first.')
             return
-        path = item.data(Qt.ItemDataRole.UserRole)
+        path = item.data(Qt.ItemDataRole.UserRole) if item else None
         try:
-            data = load_json(path, 'screen')
-            if data['backend'] not in ('gnome', 'libinput'):
+            data = load_json(path, 'screen') if flag != '--system-wide' else {'backend':'system'}
+            if data['backend'] not in ('gnome', 'libinput', 'system'):
                 raise ToolError('Select a libinput candidate for this operation.')
         except Exception as exc:
             self.log.emit(str(exc))
@@ -490,7 +493,7 @@ class ScreenPage(QWidget):
         process = QProcess(self)
         self._operation_process = process
         process.setProperty('operation', flag)
-        runtime.configure_process(process, runtime.command('calibrate-screen.py', flag, path, '--pkexec', *(['--qt'] if flag == '--verify' else [])))
+        runtime.configure_process(process, runtime.command('calibrate-screen.py', flag, *([path] if flag != '--system-wide' else []), '--pkexec', *(['--qt'] if flag == '--verify' else [])))
         process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         process.readyReadStandardOutput.connect(lambda: self.log.emit(bytes(process.readAllStandardOutput()).decode(errors='replace').strip()))
         def finished(code, _status):

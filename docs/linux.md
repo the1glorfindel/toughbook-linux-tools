@@ -145,3 +145,12 @@ own kernel/firmware setup. Never assume a DKMS-generated key is already trusted.
   [PipeWire audio](https://archlinux.org/packages/extra/x86_64/pipewire-audio/),
   [ACP profiles](https://archlinux.org/packages/extra/x86_64/alsa-card-profiles/) and
   [KDE screen helper files](https://archlinux.org/packages/extra/x86_64/libkscreen/files/).
+
+
+## System-wide finger calibration dependencies
+
+Setup installs `xserver-xorg-input-libinput` on Ubuntu/Debian and
+`xorg-x11-drv-libinput` on Fedora for the app's **Calibrate for login and desktop**
+workflow. Rerun setup after updating an older checkout. See
+[calibration and restore](screen-calibration.md#system-wide-login-and-desktop-calibration)
+for administrator authorization, reboot requirements and migration behavior.

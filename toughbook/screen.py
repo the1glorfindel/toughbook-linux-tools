@@ -129,6 +129,9 @@ def activate_x11():
     data = load_json(activation_path())
     device = find_saved_device(data)
     layout('x11')  # Refuse to apply a normal-layout matrix to a changed layout.
+    from .system_touch import driver_matrix, same
+    if not same(driver_matrix(device), IDENTITY):
+        return 0  # Sensor correction is already applied by libinput.
     XInput(device).set(validate(data['matrix']))
     return 0
 
@@ -173,6 +176,10 @@ class KWin:
 
 
 def calibration_state(backend, device):
+    if backend == 'x11':
+        from .system_touch import driver_matrix, same
+        if not same(driver_matrix(device), IDENTITY):
+            raise ToolError('Driver calibration is active. Use Calibrate for login and desktop to avoid double correction.')
     live = KWin(device) if backend == 'kde' else XInput(device) if backend == 'x11' else None
     if live is not None:
         previous = live.get()
@@ -238,6 +245,9 @@ def find_saved_device(data):
 
 def restore_backup(path, privilege='sudo'):
     data = load_json(path, 'screen')
+    if data['backend'] == 'system':
+        from .system_touch import restore
+        return restore(path, privilege)
     device = find_saved_device(data)
     if data['backend'] == 'kde':
         if backend_name() != 'kde':
@@ -246,6 +256,9 @@ def restore_backup(path, privilege='sudo'):
     elif data['backend'] == 'x11':
         if backend_name() != 'x11':
             raise ToolError('Restore an X11 calibration from an X11 session.')
+        from .system_touch import driver_matrix, same
+        if not same(driver_matrix(device), IDENTITY):
+            raise ToolError('Restore the system calibration backup and reboot before restoring a legacy X11 backup.')
         restore_live('x11', device, data['previous'])
     elif data['backend'] in ('gnome', 'libinput'):
         content = data['previous']['rule']
@@ -365,6 +378,9 @@ def command(flag, path):
 
 def apply_pending(path, privilege='sudo'):
     data = load_json(path, 'screen')
+    if data['backend'] == 'system':
+        from .system_touch import apply
+        return apply(path, privilege)
     if data['backend'] not in ('gnome', 'libinput') or data['status'] != 'candidate':
         raise ToolError('Select a pending libinput candidate backup.')
     backend = backend_name()
@@ -399,10 +415,15 @@ def main(argv=None):
     group.add_argument('--verify', metavar='BACKUP', help='Verify libinput calibration after a new login')
     group.add_argument('--restore', metavar='BACKUP', help='Restore saved calibration')
     group.add_argument('--activate', action='store_true', help='Restore saved X11 calibration at login')
+    group.add_argument('--system-touch-helper', metavar='REQUEST', help=argparse.SUPPRESS)
+    group.add_argument('--system-wide', action='store_true', help='Measure a libinput candidate for login and desktop calibration; installation requires reboot')
     parser.add_argument('--qt', action='store_true', help='Use native Qt for verification targets')
     parser.add_argument('--pkexec', action='store_true', help='Use graphical authorization for system rules')
     parser.add_argument('--device', help='Eligible event name from --status, for ambiguous devices')
     args = parser.parse_args(argv)
+    if args.system_touch_helper:
+        from .system_touch import privileged_helper
+        return privileged_helper(args.system_touch_helper)
     desktop_user()
     require('udevadm')
     check_model()
@@ -414,15 +435,30 @@ def main(argv=None):
         return 0
     backend = backend_name()
     if args.status:
-        print(json.dumps({'backend': backend, 'devices': touch_devices()}, indent=2))
+        devices = touch_devices()
+        print(json.dumps({'backend': backend, 'devices': devices,
+                          'system_calibration': {'rule_installed': RULE.exists(),
+                                                 'workflow': '--system-wide; --apply BACKUP; reboot; --verify BACKUP'}}, indent=2))
         return 0
     if args.apply:
         apply_pending(args.apply, privilege=privilege)
         return 0
     output, width, height = layout(backend)
+    if args.system_wide:
+        from .system_touch import measure
+        device = choose(touch_devices(), 'event', args.device)
+        path = measure(device, backend, (width, height))
+        if path is None:
+            return 2
+        print('Candidate saved. Install with:')
+        print(command('--apply', path))
+        return 0
     if args.verify:
         data = load_json(args.verify, 'screen')
         device = find_saved_device(data)
+        if data['backend'] == 'system':
+            from .system_touch import verify
+            return verify(args.verify, device, backend, (width, height))
         if backend not in ('gnome', 'libinput') or data['backend'] not in ('gnome', 'libinput') or data['status'] != 'pending-login':
             raise ToolError('Verification requires an applied libinput candidate.')
         if data.get('session') == session_token():

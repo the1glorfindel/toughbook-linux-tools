@@ -162,8 +162,65 @@ libinput driver. Login, lock, suspend and rotation checks passed without the loc
 guard; physical finger error was at most 9.63 pixels. Pen/eraser behavior was
 confirmed unchanged. See [validation results](VALIDATION.md).
 
-This trial is not integrated into the app yet. Do not run the existing X11
-calibration or `--activate` workflow on that configuration: it can add the saved
-correction again above the driver correction. Use the trial's retained rollback
-script and reboot before returning to the old workflow. The app's existing
-Wayland rule workflow does not automatically migrate an X11 installation.
+The app now offers an integrated workflow below. The standalone pilot results
+validate the configuration approach; physical acceptance of the new app workflow
+on Ubuntu and Fedora remains pending.
+
+## System-wide login and desktop calibration
+
+Use **Calibrate for login and desktop** on the Finger touch page. It measures a
+candidate without changing live input. Save it, select the new backup, choose
+**Apply candidate**, and authorize installation. Reboot, select the same backup,
+and use **Verify after login**. Also check touch at the actual login screen.
+Verification requires a new boot, the expected rule and live driver calibration,
+and physical targets within the existing 20-pixel maximum-error limit.
+
+The equivalent source commands are:
+
+```sh
+python3 calibrate-screen.py --system-wide
+python3 calibrate-screen.py --apply /path/to/screen-backup.json
+# Reboot, then:
+python3 calibrate-screen.py --verify /path/to/screen-backup.json
+python3 calibrate-screen.py --restore /path/to/screen-backup.json
+# Reboot after restore too.
+```
+
+Portable commands use `./toughbook-tools --tool screen` in place of
+`python3 calibrate-screen.py`. The portable runtime still requires host udev,
+polkit/sudo, and the host Xorg libinput driver; it does not supply an Xorg server
+or driver. The privileged helper uses the application's own interpreter, so this
+workflow does not add a system-Python requirement to portable installations.
+
+Ubuntu setup includes `xserver-xorg-input-libinput`; Fedora setup includes
+`xorg-x11-drv-libinput`. Rerun setup when upgrading an existing installation.
+The same workflow works with native X11 and Wayland sessions; selecting libinput
+in Xorg only changes X11 finger input. Pen/eraser retain their existing drivers.
+Native Wayland and Fedora hardware acceptance remain separate checks.
+
+Installation retains the existing udev-rule filename for compatibility and
+manages `/etc/X11/xorg.conf.d/99-toughbook-finger-calibration.conf`. It narrowly
+matches the finger interface, applies sensor correction through libinput, and
+keeps the X11 coordinate transform available for display mapping and rotation.
+KDE's saved compositor calibration is updated to the measured matrix rather than
+stacking a second correction. Fedora system files are relabeled with restorecon
+when available.
+
+Backups record exact prior system files, the user's old calibration activation
+and startup files, and any recognized local touch-guard state. The known legacy
+finger `xinput.desktop` entry is retired; unrelated entries are not deleted.
+Configuration changes since measurement or installation cause a refusal instead
+of an overwrite. System-file writes are staged and rolled back on partial failure.
+An interrupted install retains a recovery backup; restore it before retrying.
+
+Restore reinstates the saved files and KDE calibration and requires a reboot.
+The local guard’s previous enablement is restored for the next graphical
+session rather than starting it over a still-active libinput correction. If it
+was running manually but not enabled, restart it manually only after reboot. Removing
+the application alone does not remove system calibration; restore its backup
+first if you want to undo the calibration.
+
+When driver calibration is active, legacy X11 measurement and restore are refused,
+and legacy `--activate` skips applying a second matrix. After a new system
+calibration, use this system workflow to recalibrate. It composes measured
+correction with the effective driver/display calibration exactly once.

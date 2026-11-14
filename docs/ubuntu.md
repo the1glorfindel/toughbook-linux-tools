@@ -85,3 +85,10 @@ A prior live-matrix reset required reapplying the intact saved calibration; its
 cause remains unknown. Suspend/resume and native GNOME Wayland remain untested
 in this retest. Portable packaging/X11 smoke checks passed separately; the portable
 helper has not replaced the source installation. See [validation status](VALIDATION.md).
+
+
+The app's **Calibrate for login and desktop** workflow now installs the narrow
+libinput rule and finger-only Xorg driver selection tested in the device pilot.
+It includes reboot verification, backup/restore, and migration away from the old
+per-user activation. Follow [system-wide calibration](screen-calibration.md#system-wide-login-and-desktop-calibration);
+the old manual pilot install script is not needed for new app-managed candidates.

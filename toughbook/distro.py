@@ -54,7 +54,7 @@ def app_packages(distro, desktop, available=None):
     if distro in ('debian', 'ubuntu'):
         available = available or package_available
         packages = ['python3', 'python3-venv', 'python3-pip', 'python3-dbus', 'python3-gi',
-                    'python3-tk', 'xwayland', 'xinput', 'x11-xserver-utils', 'pipewire-bin', 'wireplumber', 'pulseaudio-utils',
+                    'python3-tk', 'xwayland', 'xinput', 'xserver-xorg-input-libinput', 'x11-xserver-utils', 'pipewire-bin', 'wireplumber', 'pulseaudio-utils',
                     'alsa-utils', 'udev', 'systemd', 'dbus-user-session', 'libglib2.0-bin', 'xdg-desktop-portal', portal,
                     'pkexec', 'sudo', 'kmod']
         venv = not available('python3-pyside6.qtwidgets')
@@ -80,7 +80,7 @@ def app_packages(distro, desktop, available=None):
         return packages, venv
     if distro == 'fedora':
         packages = ['python3', 'python3-pyside6', 'qt6-qtwayland', 'python3-dbus',
-                    'python3-gobject', 'python3-tkinter', 'xorg-x11-server-Xwayland', 'xinput', 'xrandr',
+                    'python3-gobject', 'python3-tkinter', 'xorg-x11-server-Xwayland', 'xinput', 'xorg-x11-drv-libinput', 'xrandr',
                     'pipewire-utils', 'pipewire-libs', 'wireplumber', 'pulseaudio-utils',
                     'alsa-utils', 'systemd', 'systemd-udev', 'dbus', 'glib2', 'polkit', 'sudo', 'kmod',
                     'xdg-desktop-portal', portal]

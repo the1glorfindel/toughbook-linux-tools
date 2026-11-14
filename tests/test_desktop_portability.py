@@ -240,7 +240,8 @@ class PortableCalibrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {'XDG_CONFIG_HOME': folder}), \
              patch.object(session, 'kind', return_value='x11'), \
              patch.object(screen, 'find_saved_device', return_value=DEVICE), \
-             patch.object(screen, 'layout') as layout, patch.object(screen, 'XInput') as device:
+             patch.object(screen, 'layout') as layout, patch.object(screen, 'XInput') as device, \
+             patch('toughbook.system_touch.driver_matrix', return_value=affine.IDENTITY):
             screen.save_activation({'identity': IDENTITY, 'matrix': affine.IDENTITY})
             screen.activate_x11()
             layout.assert_called_once_with('x11')
@@ -269,6 +270,7 @@ class PortableCalibrationTests(unittest.TestCase):
             stack.enter_context(patch.object(screen, 'touch_devices', return_value=[DEVICE]))
             stack.enter_context(patch.object(screen, 'backup_path', return_value=Path(folder)/'screen.json'))
             stack.enter_context(patch.object(screen, 'activation_path', return_value=Path(folder)/'activation.json'))
+            stack.enter_context(patch('toughbook.system_touch.driver_matrix', return_value=affine.IDENTITY))
             live = stack.enter_context(patch.object(screen, 'XInput')).return_value
             live.get.return_value = {'matrix': affine.IDENTITY}
             stack.enter_context(patch.object(screen, 'save_activation', side_effect=OSError('disk full')))

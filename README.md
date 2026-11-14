@@ -30,9 +30,11 @@ existing source installation, not a portable replacement. Native GNOME Wayland,
 portable suspend/resume, and live portable helper migration/action checks remain pending.
 A separate system-wide libinput finger-calibration pilot passed boot-time login,
 lock-screen accuracy, suspend/resume, all four rotations and pen/eraser regression
-checks on this device. Its nine-target maximum error was 9.63 pixels. This pilot
-is not yet integrated into the app; do not use the existing calibration workflow
-on a pilot installation because it can apply correction twice.
+checks on this device. Its nine-target maximum error was 9.63 pixels. The app now provides a
+**Calibrate for login and desktop** workflow for system-wide libinput calibration
+on Ubuntu and Fedora, with installation, reboot verification and restore.
+The integrated workflow still needs physical acceptance on both distributions;
+the device pilot validated the underlying configuration.
 See [validation and release status](docs/VALIDATION.md) for scope and remaining work.
 
 ## Portable app (no Python installation)
@@ -97,6 +99,12 @@ On GNOME 46, see the [optional manual keyboard extension](docs/gnome-keyboard.md
 if the built-in keyboard appears automatically after finger touch in laptop use.
 If Secure Boot is enabled, follow the [signing guide](docs/driver-installation.md)
 before loading the driver, then enable the button helper in the Buttons page.
+
+For calibration on both the login screen and desktop, choose **Calibrate for
+login and desktop** on the Finger touch page. Save the candidate, select it, use
+**Apply candidate**, reboot, then select **Verify after login**. Administrator
+authorization is requested only when installing/restoring system configuration.
+See [system-wide calibration](docs/screen-calibration.md#system-wide-login-and-desktop-calibration).
 
 Calibrate with only the internal display active, in normal landscape at 100%
 scale. Audio repair requires a working PipeWire/Pulse compatibility server and

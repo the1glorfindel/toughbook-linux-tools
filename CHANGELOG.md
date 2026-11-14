@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — system-wide finger calibration
+
+- Add GUI/CLI measurement, installation, reboot verification and restore for
+  login-screen and desktop libinput calibration on Ubuntu and Fedora.
+- Preserve previous rules/startup files and KDE calibration, retire recognized
+  session workarounds, and guard against double correction and stale backups.
+- Include Xorg libinput driver dependencies and transaction/migration tests.
+
+
 ## Unreleased — validation status update
 
 - Record the local portable build, clean-container runtime, native X11 GUI and

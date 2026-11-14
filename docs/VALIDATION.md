@@ -385,10 +385,29 @@ Confirmed pilot results:
 - User confirmed pen/eraser behavior functioned as intended after the trial.
 
 The device trial passed these checks without a custom kernel module or calibration
-watchdog. This is not yet a supported app installation mode. Existing X11
-calibration, activation and restore workflows need explicit awareness of driver
-calibration before they can safely manage this configuration. Native Wayland,
+watchdog. At the time of the pilot, this was not an app installation mode. The integration
+section below records the subsequent implementation. Native Wayland,
 portable integration, broader hardware and repeated-cycle endurance remain
 unvalidated by this pilot. Backups and install/rollback scripts are retained
 locally outside the repository; no pilot artifacts or user identities are packaged
 in a release.
+
+
+## App integration of system-wide calibration
+
+The Finger touch GUI and `--system-wide` CLI now create system calibration
+candidates. Apply/verify/restore handle both the udev rule and Xorg finger-driver
+selection, migrate per-user activation, handle KDE overrides, and prevent legacy
+X11 double correction. Ubuntu/Fedora setup includes the Xorg libinput driver.
+
+181 automated tests passed during integration, including partial-write rollback,
+authorization denial, stale configuration, unrelated startup entries, KDE override
+migration/restore, driver/display composition, reboot verification and rejection
+of double calibration. These are simulated workflow checks, not fresh physical
+Ubuntu/Fedora acceptance. Existing portable artifacts predate this integration
+and must be rebuilt and revalidated before release.
+
+The integrated source app also passed the native Ubuntu GNOME X11 smoke check:
+1024x768, `xcb`, nine synthetic touches within one pixel, preview acceptance,
+all four pages and clean shutdown. This did not install a candidate or repeat the
+physical pilot checks through the new app workflow.
