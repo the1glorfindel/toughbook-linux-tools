@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — Ubuntu Plasma 5 compatibility
+
+- Handle array-valued KWin calibration matrices as well as text matrices.
+- Run kscreen-doctor through its XCB platform when a Wayland session has an
+  X display, avoiding observed Qt5 Wayland client crashes during rotation.
+  The application remains native Wayland; KScreen controls KWin via D-Bus.
+
+
 ## Unreleased — Ubuntu preview readiness
 
 - State Ubuntu GNOME X11/Wayland source preview readiness on the tested CF-19 Mk6.

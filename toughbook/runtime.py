@@ -103,6 +103,11 @@ def host_environment(base=None):
 
 def program_invocation(argv, env=None):
     argv = list(map(str, argv))
+    base = os.environ if env is None else env
+    if Path(argv[0]).name == 'kscreen-doctor' and base.get('XDG_SESSION_TYPE') == 'wayland' and base.get('DISPLAY'):
+        # Qt5 KScreen on Ubuntu can crash in its Wayland platform plugin.
+        # KScreen still controls KWin through D-Bus; only this CLI uses XCB.
+        env = {**base, 'QT_QPA_PLATFORM': 'xcb'}
     if not frozen():
         return argv, env
     bundled = native_program(argv[0]) if argv[0] in BUNDLED_PROGRAMS else None

@@ -114,3 +114,16 @@ class RuntimeTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class KScreenPlatformTests(__import__('unittest').TestCase):
+    def test_wayland_kscreen_only_uses_xcb_when_display_exists(self):
+        from toughbook import runtime
+        from unittest.mock import patch
+        environment={'XDG_SESSION_TYPE':'wayland','DISPLAY':':1','QT_QPA_PLATFORM':'wayland'}
+        with patch.object(runtime,'frozen',return_value=False):
+            argv,env=runtime.program_invocation(['kscreen-doctor','-j'],environment)
+            self.assertEqual(env['QT_QPA_PLATFORM'],'xcb')
+            self.assertEqual(environment['QT_QPA_PLATFORM'],'wayland')
+            self.assertEqual(runtime.program_invocation(['other-tool'],environment)[1],environment)
+            no_x={'XDG_SESSION_TYPE':'wayland','QT_QPA_PLATFORM':'wayland'}
+            self.assertEqual(runtime.program_invocation(['kscreen-doctor','-j'],no_x)[1],no_x)
