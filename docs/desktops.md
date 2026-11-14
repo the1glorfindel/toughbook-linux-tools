@@ -17,6 +17,16 @@ coverage; physical validation on additional desktops remains pending.
 | Touch calibration | Native X11 device matrix or persistent libinput udev rule | KWin live preview; Mutter display discovery |
 | Button assignments | Executable, shell command or installed application | Built-in actions use detected interfaces/providers |
 
+## Observed Wayland experience
+
+On the reference CF-19 Mk6 running Ubuntu 24.04.4 GNOME 46, the user reports
+that Wayland works better than Xorg: the on-screen keyboard feels more fluid,
+and screen rotation appears instant without the blanking observed on Xorg.
+This is a hands-on observation on this device, not a timing benchmark or a claim
+about every Toughbook. Native Wayland GUI, physical touch, speaker playback,
+button identification/actions, all four rotations, lock/unlock and suspend/resume
+have now been checked. See [validation results](VALIDATION.md) for limits.
+
 ## Setup and session startup
 
 Run `python3 tools/setup-linux.py` from your graphical session. Unknown desktop

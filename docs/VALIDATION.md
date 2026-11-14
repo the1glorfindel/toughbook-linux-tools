@@ -411,3 +411,42 @@ The integrated source app also passed the native Ubuntu GNOME X11 smoke check:
 1024x768, `xcb`, nine synthetic touches within one pixel, preview acceptance,
 all four pages and clean shutdown. This did not install a candidate or repeat the
 physical pilot checks through the new app workflow.
+
+
+## Native Ubuntu GNOME Wayland hardware checks (2026-11-14)
+
+The reference CF-192NYZX1M was switched to native GNOME Wayland on Ubuntu
+24.04.4, GNOME Shell 46.0, kernel `7.0.0-43-generic`. The source app used
+Python 3.12.3 and Qt/PySide 6.12.0. The earlier system-wide libinput rule remained
+installed; these checks did not reinstall or restore a candidate through the app.
+
+- Qt reported native `wayland`, internal LVDS-1 at 1024x768, scale 1, normal
+  landscape. Native GUI smoke checks passed nine synthetic touches within one
+  pixel, preview acceptance, all four pages and clean shutdown.
+- Nine physical finger targets passed the 20-pixel gate with maximum error
+  **18.89 pixels**. The source verification harness changed no calibration.
+- The user confirmed both speaker samples. Playback used bundled native clients
+  from the earlier portable artifact; this does not establish portable GUI
+  acceptance or fresh audio-repair installation on Wayland.
+- The installed source helper and monitor captured all four named paired button
+  edges while actions were paused, then resumed normal actions without errors.
+- The user confirmed rotation and finger accuracy in all four orientations,
+  the Keyboard action, and Circle opening the launcher/overview.
+- The user confirmed Key locks, accurate unlock-screen finger input, Circle and
+  Rotation actions blocked while locked, and Circle working after unlock.
+- Journal evidence confirms a completed suspend/resume cycle. The user confirmed
+  accurate touch and working Keyboard/Circle actions after waking; the helper
+  remained active.
+
+The user reports that this Toughbook works better with GNOME Wayland than Xorg:
+the on-screen keyboard feels more fluid, and rotation appears instant without
+the blanking seen on Xorg. No latency or frame timing was measured; this is a
+subjective comparison of the tested installation.
+
+Wayland pen/eraser regression, boot-time login-screen touch behavior after this
+session switch, app-managed calibration install/restore, clean setup, and rebuilt
+portable Wayland runtime acceptance remain pending. These source-app results do
+not validate every Ubuntu desktop, Fedora configuration or Toughbook revision.
+The earlier pending GNOME Wayland source checks are superseded only for the
+specific checks listed here. The default-workflow change also passed 185 automated
+tests before this physical session.

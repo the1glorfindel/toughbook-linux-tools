@@ -4,8 +4,8 @@ For shared Debian/Ubuntu, Fedora and Arch setup, start with
 [Linux installation and compatibility](linux.md).
 
 Ubuntu has live validation on the same CF-19 Mk6 hardware as the Fedora
-implementation. Specific Ubuntu 24.04 GNOME X11 hardware checks are recorded in
-[validation status](VALIDATION.md); clean setup, DKMS and other Ubuntu sessions
+implementation. Specific Ubuntu 24.04 GNOME X11 and native Wayland hardware checks are recorded in
+[validation status](VALIDATION.md); clean setup, DKMS and additional Ubuntu sessions
 still need acceptance testing. Use a local Wayland or X11 graphical session. See [desktop compatibility](desktops.md)
 for common calibration and dedicated-device button delivery. Other CF-19 revisions
 remain outside the tested hardware scope.
@@ -92,3 +92,14 @@ libinput rule and finger-only Xorg driver selection tested in the device pilot.
 It includes reboot verification, backup/restore, and migration away from the old
 per-user activation. Follow [system-wide calibration](screen-calibration.md#system-wide-login-and-desktop-calibration);
 the old manual pilot install script is not needed for new app-managed candidates.
+
+
+## GNOME Wayland experience
+
+On the reference CF-19 Mk6 running Ubuntu 24.04.4 GNOME 46, the user reports
+that Wayland works better than Xorg: the on-screen keyboard feels more fluid,
+and screen rotation appears instant without the blanking observed on Xorg.
+This is a hands-on observation on this device, not a timing benchmark or a claim
+about every Toughbook. Native Wayland GUI, physical touch, speaker playback,
+button identification/actions, all four rotations, lock/unlock and suspend/resume
+have now been checked. See [validation results](VALIDATION.md) for limits.

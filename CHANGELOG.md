@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — Ubuntu GNOME Wayland validation
+
+- Record native source GUI, finger accuracy, speaker playback, button actions,
+  rotation, lock/unlock and suspend/resume checks on the reference Toughbook.
+- Record the user-observed smoother on-screen keyboard and rotation without
+  Xorg-style blanking, scoped to this device rather than a measured benchmark.
+
+
 ## Unreleased — one default calibration workflow
 
 - Default GUI and CLI calibration to system-wide login/desktop correction.

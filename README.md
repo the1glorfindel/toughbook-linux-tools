@@ -26,8 +26,9 @@ and helper startup after a full reboot. Post-reboot finger verification measured
 
 The portable 0.2.0 build passed clean-container runtime checks, native X11 GUI
 checks, and isolated install/upgrade/uninstall checks. The reboot checks used the
-existing source installation, not a portable replacement. Native GNOME Wayland,
-portable suspend/resume, and live portable helper migration/action checks remain pending.
+existing source installation, not a portable replacement. Native GNOME Wayland
+source-app checks have now passed; portable Wayland, portable suspend/resume,
+and live portable helper migration/action checks remain pending.
 A separate system-wide libinput finger-calibration pilot passed boot-time login,
 lock-screen accuracy, suspend/resume, all four rotations and pen/eraser regression
 checks on this device. Its nine-target maximum error was 9.63 pixels. The app now provides a
@@ -36,6 +37,11 @@ on Ubuntu and Fedora, with installation, reboot verification and restore.
 The integrated workflow still needs physical acceptance on both distributions;
 the device pilot validated the underlying configuration.
 See [validation and release status](docs/VALIDATION.md) for scope and remaining work.
+
+On this reference Toughbook, the user reports a smoother on-screen keyboard and
+instant screen rotation without the blanking seen on Xorg when using GNOME
+Wayland. This is a device-specific experience report, not a performance benchmark.
+See [desktop observations](docs/desktops.md#observed-wayland-experience).
 
 ## Portable app (no Python installation)
 
