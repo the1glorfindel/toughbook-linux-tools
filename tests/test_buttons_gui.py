@@ -37,5 +37,31 @@ class ButtonPageTests(unittest.TestCase):
                 APP.sendPostedEvents(None, QEvent.DeferredDelete)
 
 
+    def test_pen_selector_applies_only_on_explicit_click(self):
+        from toughbook import pen
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {'XDG_CONFIG_HOME':folder}), patch.object(ButtonsPage,'refresh_status'), patch.object(ButtonsPage,'app_choices',return_value=[]), patch.object(pen,'status',return_value={'device':'Test pen','action':'default'}), patch.object(pen,'apply') as apply:
+            page=ButtonsPage()
+            try:
+                apply.assert_not_called()
+                page.pen_action.setCurrentIndex(page.pen_action.findData('right'))
+                page.pen_save.click()
+                apply.assert_called_once_with('right')
+            finally:
+                page.timer.stop();page.close();page.deleteLater()
+                APP.sendPostedEvents(None,QEvent.DeferredDelete)
+
+    def test_pen_selector_explains_unsupported_desktop(self):
+        from toughbook import pen
+        from toughbook.common import ToolError
+        with patch.object(ButtonsPage,'refresh_status'), patch.object(ButtonsPage,'app_choices',return_value=[]), patch.object(pen,'status',side_effect=ToolError('Requires KDE Wayland')):
+            page=ButtonsPage()
+            try:
+                self.assertFalse(page.pen_save.isEnabled())
+                self.assertIn('KDE Wayland',page.pen_status.text())
+            finally:
+                page.timer.stop();page.close();page.deleteLater()
+                APP.sendPostedEvents(None,QEvent.DeferredDelete)
+
+
 if __name__ == '__main__':
     unittest.main()

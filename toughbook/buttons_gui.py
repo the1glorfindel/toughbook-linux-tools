@@ -109,6 +109,23 @@ class ButtonsPage(QWidget):
         save.clicked.connect(self.save_settings); reset.clicked.connect(self.reset_settings)
         actions.addWidget(save); actions.addWidget(reset); actions.addStretch(); col.addLayout(actions)
 
+        pen_group = QGroupBox('Pen side button')
+        pen_layout = QVBoxLayout(pen_group)
+        self.pen_status = QLabel(''); self.pen_status.setWordWrap(True)
+        pen_layout.addWidget(self.pen_status)
+        self.pen_action = QComboBox()
+        for label, value in [('Desktop default','default'), ('Right click','right'), ('Middle click','middle'), ('Left click','left')]:
+            self.pen_action.addItem(label, value)
+        pen_layout.addWidget(self.pen_action)
+        pen_row = QHBoxLayout()
+        self.pen_save = QPushButton('Apply pen action')
+        self.pen_restore = QPushButton('Restore previous pen mapping')
+        self.pen_save.clicked.connect(lambda: self.configure_pen(False))
+        self.pen_restore.clicked.connect(lambda: self.configure_pen(True))
+        pen_row.addWidget(self.pen_save); pen_row.addWidget(self.pen_restore)
+        pen_layout.addLayout(pen_row); col.addWidget(pen_group)
+        self.refresh_pen()
+
         helper = QGroupBox('Shortcut helper')
         hcol = QVBoxLayout(helper)
         self.backend_combo = QComboBox()
@@ -159,6 +176,34 @@ class ButtonsPage(QWidget):
                      self.app_choice[key].currentData() if kind == 'application' else self.value[key].text().strip())
             data[key] = {'type':kind, 'value':value}
         return buttons.validate(data)
+
+    def refresh_pen(self):
+        from . import pen
+        try:
+            status = pen.status()
+            action = status['action']
+            if action == 'custom' and self.pen_action.findData('custom') < 0:
+                self.pen_action.addItem('Custom desktop mapping (unchanged)', 'custom')
+            self.pen_action.setCurrentIndex(self.pen_action.findData(action))
+            self.pen_status.setText(status['device'] + ' · KDE Wayland · applies only to the pen side button; finger calibration is unchanged.')
+            self.pen_action.setEnabled(True); self.pen_save.setEnabled(True)
+            self.pen_restore.setEnabled(pen.backup_path().exists())
+        except Exception as exc:
+            self.pen_status.setText(str(exc))
+            for widget in (self.pen_action, self.pen_save, self.pen_restore):
+                widget.setEnabled(False)
+
+    def configure_pen(self, restore=False):
+        from . import pen
+        try:
+            if restore:
+                pen.restore()
+            else:
+                pen.apply(self.pen_action.currentData())
+            self.log.emit('Pen mapping updated. Test the side button while hovering near the display.')
+        except Exception as exc:
+            self.log.emit('Pen mapping failed: ' + str(exc))
+        self.refresh_pen()
 
     def save_settings(self):
         try:

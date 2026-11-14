@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — pen side-button selection
+
+- Add a separate KDE Wayland pen selector for desktop default, right, middle
+  and left click, with saved previous-mapping restoration.
+- Preserve finger calibration and front-button assignments; explain unavailable
+  pen mapping on GNOME/X11 rather than claiming unsupported changes.
+
+
 ## Unreleased — Ubuntu Plasma 5 compatibility
 
 - Handle array-valued KWin calibration matrices as well as text matrices.

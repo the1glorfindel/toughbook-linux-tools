@@ -129,3 +129,27 @@ landscape. A lock request needs an actual configured session locker.
 retains preferences and recovery backups. Driver unload/removal is separate;
 follow the driver guide. Existing physical Fedora/KDE portal validation remains
 recorded in [validation status](VALIDATION.md); it does not validate new backends.
+
+
+## Pen side button (KDE Wayland)
+
+The Buttons page has a separate **Pen side button** section. Choose **Desktop
+default**, **Right click**, **Middle click**, or **Left click**, then select
+**Apply pen action**. Nothing changes merely by opening the page or selecting an
+item. **Restore previous pen mapping** restores the setting that existed before
+the app's first change, including a custom KDE binding.
+
+This control uses KWin's native per-device button-rebinding plugin on KDE
+Wayland, with the KDE configuration utilities. It maps only the reference
+Wacom pen's first side button (BTN_STYLUS), not the tip, finger sensor, other
+pens, or the four front-panel buttons. It does not require sudo or a raw-input
+reader. The mapping persists in the user's KDE settings and applies to that
+user's KDE session, not GDM's login screen. The app reloads KWin's rebinding
+plugin to apply changes; existing unrelated mappings remain in the config.
+
+GNOME and X11 mapping interfaces are not implemented by this control; it is
+disabled with an explanation on unsupported desktops. Finger calibration is
+independent of this setting. Removing the app leaves the KDE mapping intact;
+restore it first if desired. On the tested Ubuntu Plasma 5.27 session the native
+pen side button produced middle-click before remapping. Accurate pen tracking
+does not imply the side button is mapped to right-click.

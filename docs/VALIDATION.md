@@ -476,3 +476,35 @@ not validate every Ubuntu desktop, Fedora configuration or Toughbook revision.
 The earlier pending GNOME Wayland source checks are superseded only for the
 specific checks listed here. The default-workflow change also passed 185 automated
 tests before this physical session.
+
+
+## Ubuntu Plasma 5 Wayland follow-up and pen selector
+
+Plasma 5.27.12 source-app checks on the reference Ubuntu installation passed native
+Wayland GUI rendering, speaker samples, all four named button edges, physical
+finger accuracy (14.25-pixel maximum against the 20-pixel gate), Circle launcher,
+lock/unlock with action suppression, and suspend/resume with unchanged KWin
+calibration. Maliit needed selection as the Wayland input method and a new login;
+the user then confirmed keyboard show, typing and hide behavior.
+
+Two app compatibility fixes were installed: KWin calibration arrays are normalized
+instead of parsed as text, and kscreen-doctor uses its XCB platform when an X
+display exists in the Wayland session. Before the latter fix, all eight physical
+Rotation press/release pairs arrived but kscreen-doctor crashed with allocator
+errors. After the fix, the observer recorded exactly two full rotation cycles
+`1,8,4,2,1,8,4,2,1`, eight paired presses/releases and no helper errors. The user
+confirmed correct rotation and accurate finger input. This does not establish
+native KScreen CLI reliability without the workaround.
+
+The pen has no eraser. Tracking was user-confirmed accurate, but side-button
+right-click failed: a native Qt test captured paired MiddleButton events rather
+than RightButton. The new separate KDE Wayland selector maps that side button
+through KWin's native per-device rebinding plugin. It provides desktop default,
+right, middle and left click plus previous-mapping restore; it does not touch
+calibration or front-button assignments. GNOME/X11 pen selection is unavailable.
+
+199 automated tests passed with selector coverage for explicit apply, rollback,
+restoration, custom prior mappings and unsupported desktops. Physical acceptance
+of the new selector, app-managed calibration install/restore, and rebuilt portable
+runtime checks remain pending. These KDE findings do not establish a fresh KDE
+setup pass or broaden tested pen/hardware support.
