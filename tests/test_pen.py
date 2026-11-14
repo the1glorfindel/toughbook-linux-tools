@@ -57,8 +57,23 @@ class PenTests(TemporaryState):
         self.assertEqual(pen.status()['action'],'custom');self.assertEqual(self.value,'Key,Alt+F4')
 
 
+    def test_restore_never_unloads_originally_disabled_plugin(self):
+        self.context['loaded']=False
+        pen.apply('right');pen.restore()
+        self.context['api'].UnloadPlugin.assert_not_called()
+        self.context['api'].LoadPlugin.assert_not_called()
+
+
 class PenAvailabilityTests(__import__('unittest').TestCase):
     def test_gnome_and_x11_are_explicitly_unavailable(self):
         for backend,kind in [('gnome','wayland'),('x11','x11')]:
             with patch.object(pen.session,'compositor',return_value=backend),patch.object(pen.session,'kind',return_value=kind):
                 with self.assertRaisesRegex(ToolError,'KDE Plasma Wayland'):pen.connect()
+
+
+
+class PenReloadSafetyTests(__import__('unittest').TestCase):
+    def test_saving_does_not_reload_compositor_plugin(self):
+        api=Mock()
+        pen.reload({'api':api,'plugin':'kwin5_plugin_buttonrebinds'})
+        api.UnloadPlugin.assert_not_called();api.LoadPlugin.assert_not_called()

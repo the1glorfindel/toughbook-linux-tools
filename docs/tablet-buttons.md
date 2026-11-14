@@ -135,8 +135,8 @@ recorded in [validation status](VALIDATION.md); it does not validate new backend
 
 The Buttons page has a separate **Pen side button** section. Choose **Desktop
 default**, **Right click**, **Middle click**, or **Left click**, then select
-**Apply pen action**. Nothing changes merely by opening the page or selecting an
-item. **Restore previous pen mapping** restores the setting that existed before
+**Save pen action (next login)**. Nothing changes merely by opening the page or selecting an
+item. **Restore previous mapping (next login)** restores the setting that existed before
 the app's first change, including a custom KDE binding.
 
 This control uses KWin's native per-device button-rebinding plugin on KDE
@@ -144,8 +144,9 @@ Wayland, with the KDE configuration utilities. It maps only the reference
 Wacom pen's first side button (BTN_STYLUS), not the tip, finger sensor, other
 pens, or the four front-panel buttons. It does not require sudo or a raw-input
 reader. The mapping persists in the user's KDE settings and applies to that
-user's KDE session, not GDM's login screen. The app reloads KWin's rebinding
-plugin to apply changes; existing unrelated mappings remain in the config.
+user's KDE session, not GDM's login screen. Changes require saving your work and logging out and back in. The app never
+unloads or reloads KWin plugins: the earlier live-reload implementation caused
+session loss during a restore test. Existing unrelated mappings remain in the config.
 
 GNOME and X11 mapping interfaces are not implemented by this control; it is
 disabled with an explanation on unsupported desktops. Finger calibration is

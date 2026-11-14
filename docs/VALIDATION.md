@@ -508,3 +508,17 @@ restoration, custom prior mappings and unsupported desktops. Physical acceptance
 of the new selector, app-managed calibration install/restore, and rebuilt portable
 runtime checks remain pending. These KDE findings do not establish a fresh KDE
 setup pass or broaden tested pen/hardware support.
+
+
+### Pen mapping restore session-loss incident
+
+The initial live plugin reload implementation caused session loss when the user
+restored the default pen mapping on Ubuntu Plasma Wayland. The journal recorded
+a broken Wayland connection; the precise native crash mechanism has not been
+established. That implementation is withdrawn: mapping operations never call
+KWin plugin LoadPlugin or UnloadPlugin and instead require logout/login to
+activate saved configuration. The previously requested default mapping was saved
+without a plugin reload. 201 automated tests passed after the fix, including
+explicit no-plugin-reload checks. End-to-end physical verification across a new
+login remains pending; the earlier selector tests did not establish live-reload
+safety and must not be treated as doing so.

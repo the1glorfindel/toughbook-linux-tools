@@ -39,7 +39,7 @@ class ButtonPageTests(unittest.TestCase):
 
     def test_pen_selector_applies_only_on_explicit_click(self):
         from toughbook import pen
-        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {'XDG_CONFIG_HOME':folder}), patch.object(ButtonsPage,'refresh_status'), patch.object(ButtonsPage,'app_choices',return_value=[]), patch.object(pen,'status',return_value={'device':'Test pen','action':'default'}), patch.object(pen,'apply') as apply:
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {'XDG_CONFIG_HOME':folder}), patch.object(ButtonsPage,'refresh_status'), patch.object(ButtonsPage,'app_choices',return_value=[]), patch.object(pen,'status',return_value={'device':'Test pen','action':'default'}), patch.object(pen,'apply') as apply, patch('toughbook.buttons_gui.QMessageBox.information'):
             page=ButtonsPage()
             try:
                 apply.assert_not_called()

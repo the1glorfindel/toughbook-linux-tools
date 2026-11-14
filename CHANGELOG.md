@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — pen mapping session-loss fix
+
+- Stop unloading/reloading KWin plugins when saving or restoring pen mappings.
+- Require a new login to activate saved mappings and explain that requirement
+  in the selector and completion dialog. Live reload caused session loss during
+  the Ubuntu Plasma restore test.
+
+
 ## Unreleased — pen side-button selection
 
 - Add a separate KDE Wayland pen selector for desktop default, right, middle

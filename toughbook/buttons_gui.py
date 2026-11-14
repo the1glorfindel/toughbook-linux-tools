@@ -118,8 +118,8 @@ class ButtonsPage(QWidget):
             self.pen_action.addItem(label, value)
         pen_layout.addWidget(self.pen_action)
         pen_row = QHBoxLayout()
-        self.pen_save = QPushButton('Apply pen action')
-        self.pen_restore = QPushButton('Restore previous pen mapping')
+        self.pen_save = QPushButton('Save pen action (next login)')
+        self.pen_restore = QPushButton('Restore previous mapping (next login)')
         self.pen_save.clicked.connect(lambda: self.configure_pen(False))
         self.pen_restore.clicked.connect(lambda: self.configure_pen(True))
         pen_row.addWidget(self.pen_save); pen_row.addWidget(self.pen_restore)
@@ -185,7 +185,7 @@ class ButtonsPage(QWidget):
             if action == 'custom' and self.pen_action.findData('custom') < 0:
                 self.pen_action.addItem('Custom desktop mapping (unchanged)', 'custom')
             self.pen_action.setCurrentIndex(self.pen_action.findData(action))
-            self.pen_status.setText(status['device'] + ' · KDE Wayland · applies only to the pen side button; finger calibration is unchanged.')
+            self.pen_status.setText(status['device'] + ' · KDE Wayland · saved changes require logout/login. Finger calibration is unchanged.')
             self.pen_action.setEnabled(True); self.pen_save.setEnabled(True)
             self.pen_restore.setEnabled(pen.backup_path().exists())
         except Exception as exc:
@@ -200,7 +200,8 @@ class ButtonsPage(QWidget):
                 pen.restore()
             else:
                 pen.apply(self.pen_action.currentData())
-            self.log.emit('Pen mapping updated. Test the side button while hovering near the display.')
+            self.log.emit('Pen mapping saved. Save your work, then log out and back in to activate it. No compositor plugin was reloaded.')
+            QMessageBox.information(self, 'Pen mapping saved', 'Save your work, then log out and back in to activate the saved pen mapping. The current session mapping may remain unchanged.')
         except Exception as exc:
             self.log.emit('Pen mapping failed: ' + str(exc))
         self.refresh_pen()

@@ -59,11 +59,8 @@ def write(context, value):
 
 
 def reload(context):
-    # Reload the native plugin so changes also apply on Plasma 5 versions whose
-    # kwriteconfig utility does not emit KConfig change notifications.
-    context['api'].UnloadPlugin(context['plugin'], timeout=5)
-    if not context['api'].LoadPlugin(context['plugin'], timeout=5):
-        raise ToolError('KWin refused to reload its button-rebinding plugin.')
+    """Never unload compositor plugins; saved mappings activate on the next login."""
+    return None
 
 
 def backup_path():
@@ -106,7 +103,5 @@ def restore():
     except Exception:
         write(context, previous); reload(context)
         raise
-    if not baseline.get('plugin_loaded', True):
-        context['api'].UnloadPlugin(context['plugin'], timeout=5)
     path.unlink()
     return status()
