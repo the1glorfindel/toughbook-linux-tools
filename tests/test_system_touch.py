@@ -245,3 +245,21 @@ class SystemTouchTests(TemporaryState):
         with patch.object(page,'start_session'),patch.object(page,'_candidate_operation') as op:
             page.start_button.click();op.assert_called_once_with('--system-wide')
         page.close()
+
+    def test_kwin_array_matrix_round_trip(self):
+        values=affine.to_kwin(self.matrix)
+        kwin=object.__new__(screen.KWin);kwin.props=Mock()
+        kwin.props.Get.side_effect=lambda iface,name,**kwargs:values if name=='calibrationMatrix' else 'LVDS-1'
+        api=Mock();api.Array.side_effect=lambda values,signature:values
+        with patch.object(screen,'dbus_module',return_value=api):
+            self.assertEqual(affine.from_kwin(kwin.get()['matrix']),self.matrix)
+            kwin.set(values,'LVDS-1')
+        api.Array.assert_called_once_with(values,signature='d')
+        self.assertEqual(kwin.props.Set.call_args.args[2],values)
+
+    def test_kwin_text_matrix_remains_supported(self):
+        values=affine.to_kwin(self.matrix);text=','.join(map(str,values))
+        kwin=object.__new__(screen.KWin);kwin.props=Mock()
+        kwin.props.Get.side_effect=lambda iface,name,**kwargs:text if name=='calibrationMatrix' else 'LVDS-1'
+        kwin.set(values,'LVDS-1')
+        self.assertEqual(kwin.props.Set.call_args.args[2],text)

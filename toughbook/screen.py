@@ -160,12 +160,16 @@ class KWin:
             raise ToolError('Reset touchscreen orientation to normal in KDE before calibration.')
 
     def get(self):
-        return {'matrix': str(self.props.Get(IFACE, 'calibrationMatrix', timeout=10)),
+        raw = self.props.Get(IFACE, 'calibrationMatrix', timeout=10)
+        text = raw if isinstance(raw, str) else ','.join(map(str, validate(raw, 16)))
+        return {'matrix': text,
                 'output': str(self.props.Get(IFACE, 'outputName', timeout=10))}
 
     def set(self, matrix, output):
         self.props.Set(IFACE, 'outputName', output, timeout=10)
-        self.props.Set(IFACE, 'calibrationMatrix', ','.join(map(str, matrix)), timeout=10)
+        current = self.props.Get(IFACE, 'calibrationMatrix', timeout=10)
+        value = ','.join(map(str, matrix)) if isinstance(current, str) else dbus_module().Array(validate(matrix, 16), signature='d')
+        self.props.Set(IFACE, 'calibrationMatrix', value, timeout=10)
         actual = list(map(float, self.get()['matrix'].split(',')))
         if len(actual) != 16 or max(abs(x-y) for x, y in zip(actual, matrix)) > 1e-4:
             raise ToolError('KWin did not accept the calibration.')
