@@ -100,12 +100,14 @@ def _keyboard(backend):
             props = dbus.Interface(obj, 'org.freedesktop.DBus.Properties')
             iface = 'org.kde.kwin.VirtualKeyboard'
             if not bool(props.Get(iface, 'available', timeout=10)):
-                raise ToolError('KDE reports that no virtual keyboard is available.')
+                raise ToolError('KDE has no configured virtual keyboard. Install/select Maliit in System Settings > Input Devices > Virtual Keyboard, then log out and back in.')
             visible = bool(props.Get(iface, 'visible', timeout=10))
             if visible:
                 props.Set(iface, 'active', False, timeout=10)
             else:
                 dbus.Interface(obj, iface).forceActivate(timeout=10)
+        except ToolError:
+            raise
         except Exception as exc:
             _portable_keyboard(backend)
             return

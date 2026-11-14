@@ -112,7 +112,7 @@ class BackendTests(unittest.TestCase):
         props.Get.side_effect = [False]
         with patch.object(desktop, 'dbus_module', return_value=dbus), \
              patch.object(desktop, '_portable_keyboard', side_effect=ToolError('No provider')), \
-             self.assertRaises(ToolError):
+             self.assertRaisesRegex(ToolError, 'configured virtual keyboard'):
             desktop._keyboard('kde')
 
     def test_kde_launcher(self):
