@@ -313,6 +313,10 @@ class ButtonsPage(QWidget):
             self.status_process = None
             process.deleteLater()
         process.finished.connect(finished)
+        timer = QTimer(process); timer.setSingleShot(True)
+        timer.timeout.connect(lambda: process.kill() if process.state() != QProcess.NotRunning else None)
+        process.finished.connect(lambda *_: timer.stop())
+        timer.start(10000)
         process.errorOccurred.connect(lambda error: finished(-1, None) if error == QProcess.FailedToStart else None)
         process.start()
 

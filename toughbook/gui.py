@@ -140,10 +140,15 @@ class MainWindow(QMainWindow):
                     'Tablet buttons: ' + (f'{len(buttons.get("driver_devices", []))} dedicated device(s)' if not buttons.get('error') else buttons['error'])]
                 self.overview_status.setText('\n'.join(lines))
             except (ValueError, KeyError, TypeError) as exc:
-                self.overview_status.setText(f'Could not read feature status: {exc}')
+                self.overview_status.setText(f'Could not read feature status: {exc}. Try Refresh overview status.')
             self._overview_process = None
             process.deleteLater()
         process.finished.connect(finished)
+        timer = QTimer(process)
+        timer.setSingleShot(True)
+        timer.timeout.connect(lambda: process.kill() if process.state() != QProcess.NotRunning else None)
+        process.finished.connect(lambda *_: timer.stop())
+        timer.start(10000)
         process.errorOccurred.connect(lambda error: finished(-1, None) if error == QProcess.FailedToStart else None)
         process.start()
 
