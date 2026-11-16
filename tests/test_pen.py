@@ -13,7 +13,6 @@ class PenTests(TemporaryState):
         self.connection=patch.object(pen,'connect',return_value=self.context);self.connection.start();self.addCleanup(self.connection.stop)
         self.reader=patch.object(pen,'read',side_effect=lambda c:self.value);self.reader.start();self.addCleanup(self.reader.stop)
         self.writer=patch.object(pen,'write',side_effect=self.write);self.writer.start();self.addCleanup(self.writer.stop)
-        self.reload=patch.object(pen,'reload');self.mock_reload=self.reload.start();self.addCleanup(self.reload.stop)
 
     def write(self,context,value):self.value=value
 
@@ -38,14 +37,9 @@ class PenTests(TemporaryState):
     def test_no_previous_override_is_restored_by_deletion(self):
         pen.apply('right');pen.restore();self.assertIsNone(self.value)
 
-    def test_failed_reload_rolls_back_only_changed_key(self):
-        self.value='MouseButton,274';self.mock_reload.side_effect=[ToolError('reload failure'),None]
-        with self.assertRaisesRegex(ToolError,'reload failure'):pen.apply('right')
-        self.assertEqual(self.value,'MouseButton,274')
-
     def test_unknown_action_is_rejected_without_writes(self):
         with self.assertRaises(ToolError):pen.apply('shell-command')
-        self.assertIsNone(self.value);self.mock_reload.assert_not_called()
+        self.assertIsNone(self.value)
 
     def test_foreign_device_backup_is_rejected(self):
         save_json(pen.backup_path(),{'kind':'pen-side-button','device':'Other Pen','previous':None})
@@ -72,8 +66,3 @@ class PenAvailabilityTests(__import__('unittest').TestCase):
 
 
 
-class PenReloadSafetyTests(__import__('unittest').TestCase):
-    def test_saving_does_not_reload_compositor_plugin(self):
-        api=Mock()
-        pen.reload({'api':api,'plugin':'kwin5_plugin_buttonrebinds'})
-        api.UnloadPlugin.assert_not_called();api.LoadPlugin.assert_not_called()

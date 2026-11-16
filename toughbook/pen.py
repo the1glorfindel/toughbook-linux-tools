@@ -39,8 +39,7 @@ def connect():
     if pair is None:
         raise ToolError('KDE configuration utilities are missing; install the KDE desktop dependencies.')
     loaded = list(map(str, props.Get('org.kde.KWin.Plugins', 'LoadedPlugins', timeout=5)))
-    return {'name':found[0], 'loaded':candidates[0] in loaded, 'reader':pair[0], 'writer':pair[1],
-            'api':dbus.Interface(plugins, 'org.kde.KWin.Plugins'), 'plugin':candidates[0]}
+    return {'name':found[0], 'reader':pair[0], 'writer':pair[1]}
 
 
 def arguments(context):
@@ -56,11 +55,6 @@ def read(context):
 def write(context, value):
     args = ['--delete'] if value is None else [value]
     run(context['writer'], *arguments(context), *args)
-
-
-def reload(context):
-    """Never unload compositor plugins; saved mappings activate on the next login."""
-    return None
 
 
 def backup_path():
@@ -82,13 +76,13 @@ def apply(action):
         if baseline['device'] != context['name']:
             raise ToolError('The saved pen mapping belongs to another device.')
     else:
-        save_json(path, {'kind':'pen-side-button', 'device':context['name'], 'previous':previous, 'plugin_loaded':context.get('loaded', True)})
+        save_json(path, {'kind':'pen-side-button', 'device':context['name'], 'previous':previous})
     try:
-        write(context, ACTIONS[action]); reload(context)
+        write(context, ACTIONS[action])
         if read(context) != ACTIONS[action]:
             raise ToolError('KDE did not retain the requested pen mapping.')
     except Exception:
-        write(context, previous); reload(context)
+        write(context, previous)
         raise
     return status()
 
@@ -99,11 +93,11 @@ def restore():
         raise ToolError('The saved pen mapping belongs to another device.')
     previous = read(context)
     try:
-        write(context, baseline['previous']); reload(context)
+        write(context, baseline['previous'])
         if read(context) != baseline['previous']:
             raise ToolError('KDE did not retain the restored pen mapping; the backup has been kept.')
     except Exception:
-        write(context, previous); reload(context)
+        write(context, previous)
         raise
     path.unlink()
     return status()
