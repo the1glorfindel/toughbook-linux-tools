@@ -154,3 +154,9 @@ independent of this setting. Removing the app leaves the KDE mapping intact;
 restore it first if desired. On the tested Ubuntu Plasma 5.27 session the native
 pen side button produced middle-click before remapping. Accurate pen tracking
 does not imply the side button is mapped to right-click.
+
+## Pen side button and recovery
+
+On KDE Plasma Wayland, the **Saved side-button action** control changes only the CF-19 pen side button. Desktop default removes the app's override; **Restore original saved mapping** returns to the mapping captured before the first change. A saved action becomes active after logout and login. The application does not restart KWin, and the saved choice is not proof that the current session is using it. GNOME and X11 pen mapping are not managed here.
+
+Front-button **Restore default assignments** replaces and saves all four assignments immediately. Button identification is separate from driver installation and cannot stop an installation in progress. Driver and shortcut backend controls are under **Advanced setup**.

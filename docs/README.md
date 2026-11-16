@@ -41,3 +41,5 @@ See the validation record below for the exact scope.
   and release-content checks.
 - [Third-party notices](../THIRD_PARTY.md): application and kernel module
   licensing/provenance.
+
+The current GUI shows pen settings as saved until a new KDE Wayland login. Physical verification of pen save and restore across login is pending. Calibration follows measure, apply, reboot, verify; saved candidates and installed backups have different available actions. System calibration restoration also requires a reboot.
