@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import sys
 
-from PySide6.QtCore import QProcess, QTimer, Signal, Qt
+from PySide6.QtCore import QProcess, QTimer, Signal, Qt, QThread
 from PySide6.QtWidgets import (QComboBox, QCompleter, QFormLayout, QGroupBox, QHBoxLayout, QLabel,
     QLineEdit, QMessageBox, QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
@@ -14,6 +14,20 @@ from . import runtime
 from . import buttons
 from . import distro
 from .common import ToolError, save_json
+
+
+class PenWorker(QThread):
+    completed = Signal(object, object)
+
+    def __init__(self, operation, parent=None):
+        super().__init__(parent)
+        self.operation = operation
+
+    def run(self):
+        try:
+            self.completed.emit(self.operation(), None)
+        except Exception as exc:
+            self.completed.emit(None, exc)
 
 
 class ButtonsPage(QWidget):
@@ -25,6 +39,8 @@ class ButtonsPage(QWidget):
         self.assignments = {}
         self.process = None
         self.status_process = None
+        self.pen_worker = None
+        self.operation_kind = None
         outer = QVBoxLayout(self)
         scroll = QScrollArea(); scroll.setWidgetResizable(True)
         content = QWidget(); col = QVBoxLayout(content)
@@ -181,37 +197,51 @@ class ButtonsPage(QWidget):
             data[key] = {'type':kind, 'value':value}
         return buttons.validate(data)
 
+    def _start_pen(self, operation, success=None):
+        if self.pen_worker is not None:
+            return
+        self.pen_status.setText('Reading or saving pen settings…')
+        for control in (self.pen_action, self.pen_save, self.pen_restore):
+            control.setEnabled(False)
+        worker = PenWorker(operation, self)
+        self.pen_worker = worker
+        self.busy_changed.emit(True)
+        def completed(value, error):
+            if error is not None:
+                self.pen_status.setText('Pen settings failed: ' + str(error))
+                self.log.emit('Pen settings failed: ' + str(error))
+            elif success:
+                self.pen_status.setText('Saved. Log out and back in to activate; active behavior is unverified.')
+                self.log.emit('Pen mapping saved. Log out and back in to activate it.')
+            else:
+                action = value['action']
+                if action == 'custom' and self.pen_action.findData('custom') < 0:
+                    self.pen_action.addItem('Custom desktop mapping (unchanged)', 'custom')
+                self.pen_action.setCurrentIndex(self.pen_action.findData(action))
+                self.pen_status.setText(value['device'] + ' · saved action; active behavior unverified until login.')
+            available = error is None or success is not None
+            self.pen_action.setEnabled(available)
+            self.pen_save.setEnabled(available and self.pen_action.currentData() != 'custom')
+            self.pen_restore.setEnabled(available and __import__('toughbook.pen', fromlist=['backup_path']).backup_path().exists())
+        def finished():
+            self.pen_worker = None
+            self.busy_changed.emit(False)
+            worker.deleteLater()
+        worker.completed.connect(completed)
+        worker.finished.connect(finished)
+        worker.start()
+
     def refresh_pen(self):
         from . import pen
-        try:
-            status = pen.status()
-            action = status['action']
-            if action == 'custom' and self.pen_action.findData('custom') < 0:
-                self.pen_action.addItem('Custom desktop mapping (unchanged)', 'custom')
-            self.pen_action.setCurrentIndex(self.pen_action.findData(action))
-            self.pen_status.setText(status['device'] + ' · KDE Wayland · saved changes require logout/login. Finger calibration is unchanged.')
-            self.pen_action.setEnabled(True); self.pen_save.setEnabled(True)
-            self.pen_restore.setEnabled(pen.backup_path().exists())
-        except Exception as exc:
-            self.pen_status.setText(str(exc))
-            for widget in (self.pen_action, self.pen_save, self.pen_restore):
-                widget.setEnabled(False)
+        self._start_pen(pen.status)
 
     def configure_pen(self, restore=False):
         from . import pen
-        try:
-            if restore:
-                pen.restore()
-            else:
-                if self.pen_action.currentData() == 'custom':
-                    self.log.emit('Custom mapping unchanged. Select a supported action to replace it.')
-                    return
-                pen.apply(self.pen_action.currentData())
-            self.log.emit('Pen mapping saved. Save your work, then log out and back in to activate it. No compositor plugin was reloaded.')
-            QMessageBox.information(self, 'Pen mapping saved', 'Save your work, then log out and back in to activate the saved pen mapping. The current session mapping may remain unchanged.')
-        except Exception as exc:
-            self.log.emit('Pen mapping failed: ' + str(exc))
-        self.refresh_pen()
+        if not restore and self.pen_action.currentData() == 'custom':
+            self.pen_status.setText('Select a supported action to replace the custom mapping.')
+            return
+        action = self.pen_action.currentData()
+        self._start_pen(pen.restore if restore else lambda: pen.apply(action), success=True)
 
     def save_settings(self):
         try:
@@ -235,11 +265,13 @@ class ButtonsPage(QWidget):
             return
         process = QProcess(self)
         self.process = process
+        self.operation_kind = 'helper'
         runtime.configure_process(process, runtime.command('toughbook-buttons.py', '--install', '--backend', self.backend_combo.currentData()))
         process.setProcessChannelMode(QProcess.MergedChannels)
         process.readyReadStandardOutput.connect(lambda: self.log.emit(bytes(process.readAllStandardOutput()).decode(errors='replace').rstrip()))
         def finished(code, _status):
             self.process = None
+            self.operation_kind = None
             self.busy_changed.emit(False)
             self.log.emit('Helper started. Direct mode needs no shortcut approval; portal mode opens the desktop dialog.' if code == 0 else f'Helper installation failed ({code}). Review output.')
             self.refresh_status()
@@ -295,7 +327,7 @@ class ButtonsPage(QWidget):
 
     def identify(self):
         if self.process and self.process.state() != QProcess.NotRunning:
-            if self.identify_button.text() == 'Stop identification':
+            if self.operation_kind == 'identify':
                 self.process.kill()
             else:
                 self.log.emit('Finish the current operation before identifying buttons.')
@@ -306,6 +338,7 @@ class ButtonsPage(QWidget):
             self.log.emit(f'Cannot pause button actions for identification: {exc}. Start/restart the helper first.')
             return
         self.process = QProcess(self)
+        self.operation_kind = 'identify'
         runtime.configure_process(self.process, runtime.command('toughbook-buttons.py', '--monitor'))
         self.process.setProcessChannelMode(QProcess.MergedChannels)
         process = self.process
@@ -324,6 +357,7 @@ class ButtonsPage(QWidget):
         if code: self.log.emit(f'Button identification ended with status {code}.')
         self.process.deleteLater()
         self.process = None
+        self.operation_kind = None
 
     def _helper_control(self, method):
         import dbus
@@ -333,6 +367,7 @@ class ButtonsPage(QWidget):
     def _start_privileged(self, argv, label):
         process = QProcess(self)
         self.process = process
+        self.operation_kind = 'maintenance'
         self._driver_label = label
         runtime.configure_process(process, ['/usr/bin/pkexec', *argv], host=True)
         process.setProcessChannelMode(QProcess.MergedChannels)
@@ -403,14 +438,22 @@ class ButtonsPage(QWidget):
             self.log.emit('Review the output above.' + advice)
         self._driver_steps = []
         self.process = None
+        self.operation_kind = None
         self.busy_changed.emit(False)
         self.refresh_status()
 
+    def closeEvent(self, event):
+        if self.pen_worker is not None:
+            self.pen_worker.wait(20000)
+        super().closeEvent(event)
+
     def shutdown(self):
         self.timer.stop()
+        if self.pen_worker is not None:
+            self.pen_worker.wait(15000)
         if self.status_process and self.status_process.state() != QProcess.NotRunning:
             self.status_process.kill()
-        if self.process and self.identify_button.text().startswith('Stop'):
+        if self.process and self.operation_kind == 'identify':
             self.process.kill()
             try:
                 self._helper_control('ResumeActions')

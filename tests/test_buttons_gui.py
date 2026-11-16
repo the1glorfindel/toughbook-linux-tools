@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+import time
 from unittest.mock import patch
 
 from PySide6.QtCore import QEvent
@@ -13,6 +14,14 @@ from toughbook.buttons_gui import ButtonsPage
 
 
 APP = QApplication.instance() or QApplication([])
+
+
+def wait_pen(page):
+    deadline = time.monotonic() + 5
+    while page.pen_worker is not None and time.monotonic() < deadline:
+        APP.processEvents()
+        time.sleep(.01)
+    APP.processEvents()
 
 
 class ButtonPageTests(unittest.TestCase):
@@ -43,9 +52,11 @@ class ButtonPageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {'XDG_CONFIG_HOME':folder}), patch.object(ButtonsPage,'refresh_status'), patch.object(ButtonsPage,'app_choices',return_value=[]), patch.object(pen,'status',return_value={'device':'Test pen','action':'default'}), patch.object(pen,'apply') as apply, patch('toughbook.buttons_gui.QMessageBox.information'):
             page=ButtonsPage()
             try:
+                wait_pen(page)
                 apply.assert_not_called()
                 page.pen_action.setCurrentIndex(page.pen_action.findData('right'))
                 page.pen_save.click()
+                wait_pen(page)
                 apply.assert_called_once_with('right')
             finally:
                 page.timer.stop();page.close();page.deleteLater()
@@ -57,6 +68,7 @@ class ButtonPageTests(unittest.TestCase):
         with patch.object(ButtonsPage,'refresh_status'), patch.object(ButtonsPage,'app_choices',return_value=[]), patch.object(pen,'status',side_effect=ToolError('Requires KDE Wayland')):
             page=ButtonsPage()
             try:
+                wait_pen(page)
                 self.assertFalse(page.pen_save.isEnabled())
                 self.assertIn('KDE Wayland',page.pen_status.text())
             finally:
