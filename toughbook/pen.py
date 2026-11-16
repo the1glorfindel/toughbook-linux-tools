@@ -4,8 +4,8 @@ import shutil
 from . import session
 from .common import ToolError, config_dir, state_dir, save_json, load_json, run, udev_properties
 
-ACTIONS = {'default': None, 'right': 'MouseButton,273',
-           'middle': 'MouseButton,274', 'left': 'MouseButton,272'}
+ACTIONS = {'default': None, 'right': 'TabletToolButton,273',
+           'middle': 'TabletToolButton,274', 'left': 'TabletToolButton,272'}
 MISSING = '__TOUGHBOOK_NO_PEN_MAPPING__'
 KEY = '331'  # Linux BTN_STYLUS, not the pen tip or a front-panel button.
 
@@ -64,6 +64,8 @@ def backup_path():
 def status():
     context = connect(); value = read(context)
     action = next((key for key, mapping in ACTIONS.items() if mapping == value), 'custom')
+    if action == 'custom':
+        action = next((key for key, mapping in ACTIONS.items() if mapping and value == mapping.replace('TabletToolButton,', 'MouseButton,')), 'custom')
     return {'device':context['name'], 'action':action, 'mapping':value}
 
 
