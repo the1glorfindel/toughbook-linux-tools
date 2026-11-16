@@ -144,6 +144,7 @@ class MainWindow(QMainWindow):
             self._overview_process = None
             process.deleteLater()
         process.finished.connect(finished)
+        process.errorOccurred.connect(lambda error: finished(-1, None) if error == QProcess.FailedToStart else None)
         process.start()
 
     def show_page(self, key):
@@ -207,6 +208,9 @@ class MainWindow(QMainWindow):
     def log(self, message):
         stamp = datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')
         self.output.appendPlainText(f'[{stamp}] {message}')
+        if any(word in str(message).lower() for word in ('failed', 'error', 'cannot', 'could not', 'select a')):
+            self.output_toggle.setChecked(True)
+            self.toggle_output(True)
 
     def toggle_output(self, expanded):
         self.output.setVisible(expanded)

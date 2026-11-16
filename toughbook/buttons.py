@@ -546,8 +546,17 @@ def integration(install):
 
 def status():
     path = state_dir() / 'buttons-session.json'
+    snapshot = json.loads(path.read_text()) if path.exists() else {'error': 'Helper has not started'}
+    try:
+        import dbus
+        alive = dbus.SessionBus().name_has_owner(CONTROL_IFACE)
+    except Exception:
+        alive = False
+    if not alive:
+        snapshot['pid'] = None
+        snapshot['error'] = 'Helper is not reachable; start or restart it.'
     return {'driver_devices': devices(), 'backend': helper_backend(), 'portal': portal_status(), 'preferred_shortcuts': TRIGGERS, 'assignments': load_settings(),
-            'session': json.loads(path.read_text()) if path.exists() else {'error': 'Helper has not started'}}
+            'session': snapshot}
 
 
 def gui():

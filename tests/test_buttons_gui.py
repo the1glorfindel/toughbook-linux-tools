@@ -28,7 +28,8 @@ class ButtonPageTests(unittest.TestCase):
                 page.save_settings()
                 self.assertEqual(buttons.load_settings()['circle'],
                                  {'type': 'application', 'value': 'org.example.App.desktop'})
-                page.reset_settings()
+                with patch('toughbook.buttons_gui.QMessageBox.question', return_value=__import__('PySide6.QtWidgets', fromlist=['QMessageBox']).QMessageBox.Yes):
+                    page.reset_settings()
                 self.assertEqual(buttons.load_settings(), buttons.defaults())
             finally:
                 page.timer.stop()

@@ -257,7 +257,7 @@ class ScreenPage(QWidget):
         instructions = QLabel('Measure and save a candidate, apply it with administrator authorization, reboot, then verify.')
         instructions.setWordWrap(True)
         layout.addWidget(instructions)
-        layout.addWidget(QLabel('Saved calibration backups'))
+        layout.addWidget(QLabel('Saved calibrations and recovery backups'))
         self.backups = QListWidget()
         layout.addWidget(self.backups)
         recovery = QHBoxLayout()
@@ -331,6 +331,7 @@ class ScreenPage(QWidget):
             self._status_process = None
             process.deleteLater()
         process.finished.connect(finished)
+        process.errorOccurred.connect(lambda error: finished(-1, None) if error == QProcess.FailedToStart else None)
         process.start()
 
     def start_session(self):
@@ -492,7 +493,7 @@ class ScreenPage(QWidget):
         self._set_busy(True)
         self.log.emit(f'Restoring calibration from {path}')
         self._run(lambda: screen.restore_backup(path, privilege='pkexec'),
-                  lambda _: (self.log.emit('Calibration restored.'), self._set_busy(False), self.refresh()),
+                  lambda _: (self.log.emit('Previous calibration configuration restored. For system-wide calibration, reboot to activate it.'), self._set_busy(False), self.refresh()),
                   lambda error: (self.log.emit(f'Restore failed: {error}'), self._set_busy(False)))
 
     def _candidate_operation(self, flag):
@@ -513,7 +514,7 @@ class ScreenPage(QWidget):
         process = QProcess(self)
         self._operation_process = process
         process.setProperty('operation', flag)
-        runtime.configure_process(process, runtime.command('calibrate-screen.py', flag, *([path] if flag != '--system-wide' else []), '--pkexec', *(['--qt'] if flag == '--verify' else [])))
+        runtime.configure_process(process, runtime.command('calibrate-screen.py', flag, *([path] if flag != '--system-wide' else []), '--pkexec', *(['--qt'] if flag == '--verify' else []), *(['--device', self.device_combo.currentData()] if flag == '--system-wide' and self.device_combo.currentData() else [])))
         process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         process.readyReadStandardOutput.connect(lambda: self.log.emit(bytes(process.readAllStandardOutput()).decode(errors='replace').strip()))
         def finished(code, _status):

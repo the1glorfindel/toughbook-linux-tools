@@ -100,6 +100,8 @@ def restore():
     previous = read(context)
     try:
         write(context, baseline['previous']); reload(context)
+        if read(context) != baseline['previous']:
+            raise ToolError('KDE did not retain the restored pen mapping; the backup has been kept.')
     except Exception:
         write(context, previous); reload(context)
         raise

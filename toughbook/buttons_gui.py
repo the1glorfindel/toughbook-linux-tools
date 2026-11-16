@@ -105,7 +105,7 @@ class ButtonsPage(QWidget):
             self.configure_editor(combo, edit, builtin, app)
         col.addWidget(group)
         actions = QHBoxLayout()
-        save = QPushButton('Save assignments'); reset = QPushButton('Reset defaults')
+        save = QPushButton('Save assignments'); reset = QPushButton('Restore default assignments…')
         save.clicked.connect(self.save_settings); reset.clicked.connect(self.reset_settings)
         actions.addWidget(save); actions.addWidget(reset); actions.addStretch(); col.addLayout(actions)
 
@@ -116,10 +116,14 @@ class ButtonsPage(QWidget):
         self.pen_action = QComboBox()
         for label, value in [('Desktop default','default'), ('Right click','right'), ('Middle click','middle'), ('Left click','left')]:
             self.pen_action.addItem(label, value)
+        pen_layout.addWidget(QLabel('Saved side-button action (active behavior is not verified)'))
         pen_layout.addWidget(self.pen_action)
+        explanation = QLabel('Desktop default removes the override. Restore returns to the original captured mapping. Changes require logout/login.')
+        explanation.setWordWrap(True)
+        pen_layout.addWidget(explanation)
         pen_row = QHBoxLayout()
         self.pen_save = QPushButton('Save pen action (next login)')
-        self.pen_restore = QPushButton('Restore previous mapping (next login)')
+        self.pen_restore = QPushButton('Restore original saved mapping (next login)')
         self.pen_save.clicked.connect(lambda: self.configure_pen(False))
         self.pen_restore.clicked.connect(lambda: self.configure_pen(True))
         pen_row.addWidget(self.pen_save); pen_row.addWidget(self.pen_restore)
@@ -199,6 +203,9 @@ class ButtonsPage(QWidget):
             if restore:
                 pen.restore()
             else:
+                if self.pen_action.currentData() == 'custom':
+                    self.log.emit('Custom mapping unchanged. Select a supported action to replace it.')
+                    return
                 pen.apply(self.pen_action.currentData())
             self.log.emit('Pen mapping saved. Save your work, then log out and back in to activate it. No compositor plugin was reloaded.')
             QMessageBox.information(self, 'Pen mapping saved', 'Save your work, then log out and back in to activate the saved pen mapping. The current session mapping may remain unchanged.')
@@ -213,6 +220,10 @@ class ButtonsPage(QWidget):
         except Exception as exc: self.log.emit(f'Could not save assignments: {exc}')
 
     def reset_settings(self):
+        if QMessageBox.question(self, 'Restore default assignments',
+                'Replace and immediately save all four front-button assignments with their defaults?',
+                QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel) != QMessageBox.Yes:
+            return
         for key, row in buttons.BUTTONS.items():
             self.kind[key].setCurrentIndex(self.kind[key].findData('builtin'))
             self.builtin_choice[key].setCurrentIndex(self.builtin_choice[key].findData(row[3]))
@@ -234,6 +245,7 @@ class ButtonsPage(QWidget):
             self.refresh_status()
             process.deleteLater()
         process.finished.connect(finished)
+        process.errorOccurred.connect(lambda error: finished(-1, None) if error == QProcess.FailedToStart else None)
         process.start()
         self.busy_changed.emit(True)
 
@@ -261,6 +273,7 @@ class ButtonsPage(QWidget):
             self.status_process = None
             process.deleteLater()
         process.finished.connect(finished)
+        process.errorOccurred.connect(lambda error: finished(-1, None) if error == QProcess.FailedToStart else None)
         process.start()
 
     def _show_status(self, info):
@@ -282,7 +295,10 @@ class ButtonsPage(QWidget):
 
     def identify(self):
         if self.process and self.process.state() != QProcess.NotRunning:
-            self.process.kill()
+            if self.identify_button.text() == 'Stop identification':
+                self.process.kill()
+            else:
+                self.log.emit('Finish the current operation before identifying buttons.')
             return
         try:
             self._helper_control('PauseActions')
@@ -295,6 +311,7 @@ class ButtonsPage(QWidget):
         process = self.process
         process.readyReadStandardOutput.connect(lambda: self.log.emit(bytes(process.readAllStandardOutput()).decode(errors='replace').rstrip()))
         self.process.finished.connect(self.identify_finished)
+        process.errorOccurred.connect(lambda error: self.identify_finished(-1, None) if error == QProcess.FailedToStart else None)
         self.process.start(); self.identify_button.setText('Stop identification')
         self.busy_changed.emit(True)
 
