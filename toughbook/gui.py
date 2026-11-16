@@ -92,7 +92,7 @@ class MainWindow(QMainWindow):
     def make_overview(self):
         page = QWidget()
         col = QVBoxLayout(page)
-        lead = QLabel('Configure your CF-19 touchscreen, audio routing, and tablet buttons.')
+        lead = QLabel('Configure your CF-19 touchscreen, audio routing, tablet buttons, and the pen side button.')
         lead.setWordWrap(True)
         lead.setStyleSheet('font-size: 18px;')
         col.addWidget(lead)
@@ -105,7 +105,7 @@ class MainWindow(QMainWindow):
         for heading, text, key in (
             ('Touchscreen', 'Inspect the touchscreen and calibrate its mapping and orientation.', 'screen'),
             ('Audio', 'Review audio devices and apply supported fixes with a backup.', 'audio'),
-            ('Tablet Buttons', 'Assign actions to the four tablet controls and manage the helper/driver.', 'buttons')):
+            ('Tablet Buttons', 'Assign front controls and the pen side button; manage helper and driver setup.', 'buttons')):
             card = QFrame(); card.setObjectName('card')
             row = QHBoxLayout(card)
             body = QVBoxLayout()

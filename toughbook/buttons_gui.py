@@ -61,9 +61,11 @@ class ButtonsPage(QWidget):
         self.packages_button = QPushButton(f'Install {distro.family_name(package_distro)} prerequisites…')
         self.identify_button = QPushButton('Identify physical buttons')
         for b in (self.packages_button, self.install_button, self.load_button, self.remove_button, self.identify_button): driver_buttons.addWidget(b)
-        col.addLayout(driver_buttons)
+        maintenance = QWidget()
+        maintenance_layout = QVBoxLayout(maintenance)
+        maintenance_layout.addLayout(driver_buttons)
         self.driver_instructions = QLabel('Install requires a compiler, matching kernel headers, DKMS, and mokutil. Secure Boot stays enabled; if enabled, complete DKMS MOK enrollment manually before loading the module.')
-        self.driver_instructions.setWordWrap(True); col.addWidget(self.driver_instructions)
+        self.driver_instructions.setWordWrap(True); maintenance_layout.addWidget(self.driver_instructions)
         if Path('/sys/firmware/efi').exists() and shutil.which('mokutil'):
             try:
                 state = runtime.host_run([shutil.which('mokutil'), '--sb-state'], capture_output=True, text=True, timeout=5)
@@ -164,7 +166,13 @@ class ButtonsPage(QWidget):
         self.configure_button = configure
         start.clicked.connect(self.start_helper); configure.clicked.connect(self.configure_shortcuts)
         hbuttons.addWidget(start); hbuttons.addWidget(configure); hbuttons.addStretch(); hcol.addLayout(hbuttons)
-        col.addWidget(helper)
+        maintenance_layout.addWidget(helper)
+        advanced = QPushButton('Advanced setup ▾')
+        advanced.setCheckable(True)
+        advanced.toggled.connect(maintenance.setVisible)
+        maintenance.hide()
+        col.addWidget(advanced)
+        col.addWidget(maintenance)
         self.live_label = QLabel(); self.live_label.setWordWrap(True); self.live_label.setTextInteractionFlags(self.live_label.textInteractionFlags() | Qt.TextSelectableByMouse)
         col.addWidget(self.live_label); col.addStretch()
         scroll.setWidget(content); outer.addWidget(scroll)
