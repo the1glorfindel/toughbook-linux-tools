@@ -37,6 +37,18 @@ class PenTests(TemporaryState):
     def test_no_previous_override_is_restored_by_deletion(self):
         pen.apply('right');pen.restore();self.assertIsNone(self.value)
 
+    def test_restore_readback_failure_keeps_backup(self):
+        self.value='Key,Ctrl+Z'
+        pen.apply('right')
+        original = self.write
+        def ignored_restore(context, value):
+            if value != 'Key,Ctrl+Z':
+                original(context, value)
+        with patch.object(pen, 'write', side_effect=ignored_restore):
+            with self.assertRaisesRegex(ToolError, 'did not retain'):
+                pen.restore()
+        self.assertTrue(pen.backup_path().exists())
+
     def test_unknown_action_is_rejected_without_writes(self):
         with self.assertRaises(ToolError):pen.apply('shell-command')
         self.assertIsNone(self.value)
@@ -63,6 +75,3 @@ class PenAvailabilityTests(__import__('unittest').TestCase):
         for backend,kind in [('gnome','wayland'),('x11','x11')]:
             with patch.object(pen.session,'compositor',return_value=backend),patch.object(pen.session,'kind',return_value=kind):
                 with self.assertRaisesRegex(ToolError,'KDE Plasma Wayland'):pen.connect()
-
-
-
