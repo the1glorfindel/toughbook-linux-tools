@@ -259,7 +259,11 @@ class ScreenPage(QWidget):
         layout.addWidget(instructions)
         layout.addWidget(QLabel('Saved calibrations and recovery backups'))
         self.backups = QListWidget()
+        self.backups.currentItemChanged.connect(lambda *_: self.update_backup_actions())
         layout.addWidget(self.backups)
+        self.backup_hint = QLabel('Choose a saved calibration to see the next available action.')
+        self.backup_hint.setWordWrap(True)
+        layout.addWidget(self.backup_hint)
         recovery = QHBoxLayout()
         self.restore_button = QPushButton('Restore selected backup')
         self.restore_button.clicked.connect(self.restore_selected)
@@ -275,13 +279,35 @@ class ScreenPage(QWidget):
         recovery.addWidget(verify)
         layout.addLayout(recovery)
         layout.addStretch()
+        self.apply_button = apply
+        self.verify_button = verify
         self._buttons = [self.start_button, self.session_button, self.legacy_backups, self.refresh_button, self.restore_button, browse, apply, verify]
         self.refresh()
+
+    def update_backup_actions(self):
+        item = self.backups.currentItem()
+        data = None
+        if item:
+            try:
+                data = load_json(item.data(Qt.ItemDataRole.UserRole), 'screen')
+            except Exception:
+                pass
+        state = data.get('status') if data else None
+        backend = data.get('backend') if data else None
+        self.apply_button.setEnabled(not self._busy and backend == 'system' and state == 'candidate')
+        self.verify_button.setEnabled(not self._busy and backend == 'system' and state == 'pending-reboot')
+        self.restore_button.setEnabled(not self._busy and state in ('installing', 'pending-reboot', 'accepted'))
+        hints = {'candidate':'Candidate measured. Apply it, then reboot and verify.',
+                 'pending-reboot':'Calibration installed. Reboot before verification.',
+                 'accepted':'Calibration verified. You can restore the previous configuration.',
+                 'restored':'Previous configuration restored; reboot to activate it.'}
+        self.backup_hint.setText(hints.get(state, 'Choose a saved calibration to see the next available action.'))
 
     def _set_busy(self, busy):
         self._busy = busy
         for button in self._buttons:
             button.setEnabled(not busy)
+        self.update_backup_actions()
         self.busy_changed.emit(busy)
 
     def _run(self, fn, done, failed, mutation=True):
@@ -309,6 +335,7 @@ class ScreenPage(QWidget):
                 self.backups.item(self.backups.count() - 1).setData(Qt.ItemDataRole.UserRole, str(path))
             except (ValueError, OSError, KeyError, ToolError):
                 continue
+        self.update_backup_actions()
         if self._busy or (self._status_process and self._status_process.state() != QProcess.ProcessState.NotRunning):
             return
         process = QProcess(self)
@@ -324,6 +351,7 @@ class ScreenPage(QWidget):
                     self.device_combo.clear()
                     for device in data['devices']:
                         self.device_combo.addItem(device['event'], device['event'])
+                    self.start_button.setEnabled(bool(data['devices']))
                 except (ValueError, KeyError, TypeError) as exc:
                     self.status_label.setText(f'Could not read touchscreen status: {exc}')
             else:
