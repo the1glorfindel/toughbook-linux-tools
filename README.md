@@ -17,7 +17,8 @@ other audio codecs are outside the tested scope. The detailed
 [documentation index](docs/README.md) explains each issue and its recovery path.
 
 The Buttons page also offers **pen side-button default and restore controls on KDE
-Wayland** for the reference Wacom pen. This does not change pen or finger
+Wayland** for the reference Wacom pen. Selectable mouse-click remaps are disabled
+after failed Plasma 5.27 physical tests. This does not change pen or finger
 calibration; GNOME/X11 pen mapping is not implemented. See
 [pen mapping](docs/tablet-buttons.md#pen-side-button-kde-wayland).
 
@@ -38,14 +39,14 @@ existing source installation, not a portable replacement. Native GNOME Wayland
 source-app checks have now passed; portable Wayland, portable suspend/resume,
 and live portable helper migration/action checks remain pending.
 A separate system-wide libinput finger-calibration pilot passed boot-time login,
-lock-screen accuracy, suspend/resume, all four rotations and pen/eraser regression
-checks on this device. Its nine-target maximum error was 9.63 pixels. The app now provides a
+lock-screen accuracy, suspend/resume, all four rotations and pen tracking
+checks on this device. This pen has no physical eraser. Its nine-target maximum error was 9.63 pixels. The app now provides a
 **Calibrate finger touch** workflow for system-wide libinput calibration
 on Ubuntu and Fedora, with installation, reboot verification and restore.
 The integrated workflow still needs physical acceptance on both distributions;
 the device pilot validated the underlying configuration.
 Stable-release gates include end-to-end app-managed calibration installation
-and restore, clean Ubuntu setup, and a rebuilt/revalidated portable executable.
+and restore, clean Ubuntu and Fedora setup, and a rebuilt/revalidated portable executable.
 This preview status does not announce a published release or broaden hardware
 support. See [validation and release status](docs/VALIDATION.md) for details.
 
@@ -117,8 +118,8 @@ if the built-in keyboard appears automatically after finger touch in laptop use.
 If Secure Boot is enabled, follow the [signing guide](docs/driver-installation.md)
 before loading the driver, then enable the button helper in the Buttons page.
 
-For calibration on both the login screen and desktop, choose **Calibrate for
-login and desktop** on the Finger touch page. Save the candidate, select it, use
+For calibration on both the login screen and desktop, choose **Calibrate finger
+touch** on the Finger touch page. Save the candidate, select it, use
 **Apply candidate**, reboot, then select **Verify after reboot**. Administrator
 authorization is requested only when installing/restoring system configuration.
 See [system-wide calibration](docs/screen-calibration.md#system-wide-login-and-desktop-calibration).
@@ -128,10 +129,11 @@ scale. Audio repair requires a working PipeWire/Pulse compatibility server and
 WirePlumber session; unplug wired headphones before testing. Expand
 **Troubleshooting output** to inspect operation results.
 
-Fedora KDE and Ubuntu 24.04 GNOME X11 on the reference CF-19 have physical
-validation evidence. See [validation results](docs/VALIDATION.md) for measured
-touch accuracy, tested workflows and remaining checks. Clean distribution setup,
-Debian/Arch hardware acceptance and additional Ubuntu desktops remain pending.
+Earlier Fedora KDE and current Ubuntu desktop sessions on the reference CF-19
+have physical validation evidence. See [validation results](docs/VALIDATION.md)
+for measured touch accuracy, tested workflows and remaining checks. The current
+source changes need a fresh [Fedora validation pass](docs/fedora.md); clean
+distribution setup and Debian/Arch hardware acceptance remain pending.
 Distribution coverage does not broaden the hardware scope in the table above.
 
 ## Independent scripts

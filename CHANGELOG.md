@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — Fedora retest preparation and current pen status
+
+- Add a Fedora KDE retest checklist for current-source setup, system
+  calibration, audio, front buttons, login persistence, suspend and recovery.
+- Record the failed Plasma 5.27 pen click remaps and disable those choices;
+  restore the original default pending a new-login check.
+- Record the later GUI operation-safety and calibration-state improvements.
+
 ## Unreleased — pen mapping session-loss fix
 
 - Stop unloading/reloading KWin plugins when saving or restoring pen mappings.
@@ -8,10 +16,11 @@
   the Ubuntu Plasma restore test.
 
 
-## Unreleased — pen side-button selection
+## Unreleased — withdrawn pen side-button selection
 
-- Add a separate KDE Wayland pen selector for desktop default, right, middle
-  and left click, with saved previous-mapping restoration.
+- Initially added a KDE Wayland selector for desktop default and mouse clicks.
+  Mouse-click choices were withdrawn after Plasma 5.27 hardware failures;
+  current controls retain desktop default and previous-mapping restoration.
 - Preserve finger calibration and front-button assignments; explain unavailable
   pen mapping on GNOME/X11 rather than claiming unsupported changes.
 

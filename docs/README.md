@@ -18,6 +18,8 @@ its launcher is `./toughbook-tools` with the same application options.
   Arch setup, package mapping, session prerequisites and kernel headers.
 - [Ubuntu bring-up](ubuntu.md): installation, distribution differences, and
   first-run checks after switching systems.
+- [Fedora retest](fedora.md): current-source setup, hardware acceptance and
+  recovery checklist for a traditional Fedora KDE installation.
 
 - [Finger-touch calibration](screen-calibration.md): why finger coordinates
   miss their targets, how Wayland/X11 calibration works, and recovery steps.
@@ -28,9 +30,9 @@ its launcher is `./toughbook-tools` with the same application options.
 - [Tablet-button driver](driver-installation.md): missing ACPI binding, exact
   Mk6 firmware mapping, Debian/Fedora/Arch DKMS setup, Secure Boot, and driver recovery.
 
-The current build is ready for preview testing. Ubuntu GNOME X11 source
-installation reboot, physical finger, speaker and button-input checks passed;
-portable Wayland, helper migration and suspend/resume checks remain pending.
+The Ubuntu source app has specific GNOME and Plasma physical checks; the
+current source still needs integrated calibration and clean-setup acceptance.
+Earlier Fedora KDE evidence does not cover the later calibration and GUI changes.
 See the validation record below for the exact scope.
 
 ## Project notes

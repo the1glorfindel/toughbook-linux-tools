@@ -1,5 +1,27 @@
 # Validation and release status
 
+## Current status and next Fedora pass (2026-11-20)
+
+The current source revision includes the system-wide finger calibration default,
+KDE Plasma compatibility fixes, GUI operation and feedback improvements, and a
+restricted pen control. The original Fedora KDE hardware checks below predate
+these changes. Follow the [Fedora retest checklist](fedora.md) before claiming
+current-source Fedora acceptance. App-managed calibration apply/reboot/verify/
+restore, fresh setup, audio restore, and login/suspend persistence remain open
+for that pass. Existing portable 0.2.0 artifacts also predate these changes.
+
+The Ubuntu Plasma 5.27 pen click selector failed physical testing: the pointer
+button mapping clicked at the desktop cursor rather than the pen position; the
+tablet-tool mapping produced no desktop click after login. During an earlier
+restore, live plugin reload caused session loss. The app no longer reloads KWin
+plugins and now exposes only Desktop default and original-mapping restore on
+KDE Wayland. The original native mapping was restored in the user configuration;
+the next-login physical result has not been reported. Do not count the 200
+passing automated tests as evidence that pen right-click works on Plasma 5.27.
+The current local suite passed 200 tests during this documentation update; the
+Fedora package-selection subset passed 11 tests. A source archive built from
+this tree includes the Fedora guide. These checks did not run on Fedora hardware.
+
 ## Current Ubuntu release readiness
 
 The source app is ready for an Ubuntu preview release on the reference CF-19 Mk6
@@ -408,7 +430,7 @@ Confirmed pilot results:
 - A source Qt verification harness measured nine physical finger targets at
   1024x768: maximum error 9.63 pixels, passing the existing 20-pixel gate. The
   user accepted the result; no calibration was changed by this measurement.
-- User confirmed pen/eraser behavior functioned as intended after the trial.
+- User confirmed pen tracking after the trial; a later inspection established that this pen has no physical eraser, so the earlier eraser claim is withdrawn.
 
 The device trial passed these checks without a custom kernel module or calibration
 watchdog. At the time of the pilot, this was not an app installation mode. The integration
@@ -469,7 +491,7 @@ the on-screen keyboard feels more fluid, and rotation appears instant without
 the blanking seen on Xorg. No latency or frame timing was measured; this is a
 subjective comparison of the tested installation.
 
-Wayland pen/eraser regression, boot-time login-screen touch behavior after this
+Wayland pen side-button regression, boot-time login-screen touch behavior after this
 session switch, app-managed calibration install/restore, clean setup, and rebuilt
 portable Wayland runtime acceptance remain pending. These source-app results do
 not validate every Ubuntu desktop, Fedora configuration or Toughbook revision.
@@ -498,16 +520,16 @@ native KScreen CLI reliability without the workaround.
 
 The pen has no eraser. Tracking was user-confirmed accurate, but side-button
 right-click failed: a native Qt test captured paired MiddleButton events rather
-than RightButton. The new separate KDE Wayland selector maps that side button
-through KWin's native per-device rebinding plugin. It provides desktop default,
-right, middle and left click plus previous-mapping restore; it does not touch
-calibration or front-button assignments. GNOME/X11 pen selection is unavailable.
+than RightButton. An initial KDE Wayland selector offered desktop default, right,
+middle and left click plus previous-mapping restore. The mouse-click choices
+were later withdrawn after the physical failures recorded above; current controls
+do not change calibration or front-button assignments. GNOME/X11 pen selection
+is unavailable.
 
-199 automated tests passed with selector coverage for explicit apply, rollback,
-restoration, custom prior mappings and unsupported desktops. Physical acceptance
-of the new selector, app-managed calibration install/restore, and rebuilt portable
-runtime checks remain pending. These KDE findings do not establish a fresh KDE
-setup pass or broaden tested pen/hardware support.
+199 automated tests passed at that earlier selector stage. They did not establish
+correct click placement or desktop delivery. App-managed calibration
+install/restore and rebuilt portable runtime checks remain pending. These KDE
+findings do not establish a fresh KDE setup pass or broaden tested hardware support.
 
 
 ### Pen mapping restore session-loss incident
