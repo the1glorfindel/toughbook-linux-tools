@@ -54,10 +54,10 @@ class ButtonPageTests(unittest.TestCase):
             try:
                 wait_pen(page)
                 apply.assert_not_called()
-                page.pen_action.setCurrentIndex(page.pen_action.findData('right'))
+                page.pen_action.setCurrentIndex(page.pen_action.findData('default'))
                 page.pen_save.click()
                 wait_pen(page)
-                apply.assert_called_once_with('right')
+                apply.assert_called_once_with('default')
             finally:
                 page.timer.stop();page.close();page.deleteLater()
                 APP.sendPostedEvents(None,QEvent.DeferredDelete)

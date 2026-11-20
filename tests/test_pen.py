@@ -29,17 +29,17 @@ class PenTests(TemporaryState):
 
     def test_original_mapping_survives_repeated_changes(self):
         self.value='Key,Ctrl+Z'
-        pen.apply('right');pen.apply('left')
+        pen.apply('default');pen.apply('default')
         self.assertEqual(load_json(pen.backup_path())['previous'],'Key,Ctrl+Z')
         pen.restore();self.assertEqual(self.value,'Key,Ctrl+Z')
         self.assertFalse(pen.backup_path().exists())
 
     def test_no_previous_override_is_restored_by_deletion(self):
-        pen.apply('right');pen.restore();self.assertIsNone(self.value)
+        pen.apply('default');pen.restore();self.assertIsNone(self.value)
 
     def test_restore_readback_failure_keeps_backup(self):
         self.value='Key,Ctrl+Z'
-        pen.apply('right')
+        pen.apply('default')
         original = self.write
         def ignored_restore(context, value):
             if value != 'Key,Ctrl+Z':
@@ -55,7 +55,7 @@ class PenTests(TemporaryState):
 
     def test_foreign_device_backup_is_rejected(self):
         save_json(pen.backup_path(),{'kind':'pen-side-button','device':'Other Pen','previous':None})
-        with self.assertRaisesRegex(ToolError,'another device'):pen.apply('right')
+        with self.assertRaisesRegex(ToolError,'another device'):pen.apply('default')
         self.assertIsNone(self.value)
 
     def test_custom_mapping_is_reported_without_replacement(self):
@@ -65,7 +65,7 @@ class PenTests(TemporaryState):
 
     def test_restore_never_unloads_originally_disabled_plugin(self):
         self.context['loaded']=False
-        pen.apply('right');pen.restore()
+        pen.apply('default');pen.restore()
         self.context['api'].UnloadPlugin.assert_not_called()
         self.context['api'].LoadPlugin.assert_not_called()
 

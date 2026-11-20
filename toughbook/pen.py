@@ -4,8 +4,8 @@ import shutil
 from . import session
 from .common import ToolError, config_dir, state_dir, save_json, load_json, run, udev_properties
 
-ACTIONS = {'default': None, 'right': 'TabletToolButton,273',
-           'middle': 'TabletToolButton,274', 'left': 'TabletToolButton,272'}
+ACTIONS = {'default': None}
+
 MISSING = '__TOUGHBOOK_NO_PEN_MAPPING__'
 KEY = '331'  # Linux BTN_STYLUS, not the pen tip or a front-panel button.
 
@@ -65,13 +65,13 @@ def status():
     context = connect(); value = read(context)
     action = next((key for key, mapping in ACTIONS.items() if mapping == value), 'custom')
     if action == 'custom':
-        action = next((key for key, mapping in ACTIONS.items() if mapping and value == mapping.replace('TabletToolButton,', 'MouseButton,')), 'custom')
+        action = 'custom'
     return {'device':context['name'], 'action':action, 'mapping':value}
 
 
 def apply(action):
     if action not in ACTIONS:
-        raise ToolError('Select Desktop default, Right click, Middle click or Left click.')
+        raise ToolError('Plasma 5.27 cannot reliably remap this pen button to a mouse click at the pen position. Restore Desktop default instead.')
     context = connect(); previous = read(context); path = backup_path()
     if path.exists():
         baseline = load_json(path, 'pen-side-button')

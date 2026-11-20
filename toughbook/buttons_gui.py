@@ -132,11 +132,11 @@ class ButtonsPage(QWidget):
         self.pen_status = QLabel(''); self.pen_status.setWordWrap(True)
         pen_layout.addWidget(self.pen_status)
         self.pen_action = QComboBox()
-        for label, value in [('Desktop default','default'), ('Right click','right'), ('Middle click','middle'), ('Left click','left')]:
+        for label, value in [('Desktop default','default')]:
             self.pen_action.addItem(label, value)
         pen_layout.addWidget(QLabel('Saved side-button action (active behavior is not verified)'))
         pen_layout.addWidget(self.pen_action)
-        explanation = QLabel('Desktop default removes the override. Restore returns to the original captured mapping. Changes require logout/login.')
+        explanation = QLabel('Plasma 5.27 cannot reliably remap this pen button to a mouse click at the pen position. Desktop default removes the override; changes require logout/login.')
         explanation.setWordWrap(True)
         pen_layout.addWidget(explanation)
         pen_row = QHBoxLayout()

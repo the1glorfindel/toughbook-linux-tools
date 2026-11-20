@@ -133,32 +133,10 @@ recorded in [validation status](VALIDATION.md); it does not validate new backend
 
 ## Pen side button (KDE Wayland)
 
-The Buttons page has a separate **Pen side button** section. Choose **Desktop
-default**, **Right click**, **Middle click**, or **Left click**, then select
-**Save pen action (next login)**. Nothing changes merely by opening the page or selecting an
-item. **Restore previous mapping (next login)** restores the setting that existed before
-the app's first change, including a custom KDE binding.
+On the tested Ubuntu Plasma 5.27 desktop, the pen's original side button produced a middle click. The app can remove its own override with **Desktop default** and restore the original saved mapping. Changes take effect after logout and login. Neither action changes finger calibration, pen tracking, or the four front buttons.
 
-This control uses KWin's native per-device button-rebinding plugin on KDE
-Wayland, with the KDE configuration utilities. It maps only the reference
-Wacom pen's first side button (BTN_STYLUS), not the tip, finger sensor, other
-pens, or the four front-panel buttons. It does not require sudo or a raw-input
-reader. The mapping persists in the user's KDE settings and applies to that
-user's KDE session, not GDM's login screen. Changes require saving your work and logging out and back in. The app never
-unloads or reloads KWin plugins: the earlier live-reload implementation caused
-session loss during a restore test. Existing unrelated mappings remain in the config.
+Selectable right, middle, and left remaps are disabled on Plasma 5.27. Physical testing found that KWin's pointer-button remap clicked at the desktop cursor instead of the pen position. A tablet-tool remap produced no desktop click after login. KWin forwards tablet-tool button events only to clients that support the tablet protocol, so this cannot reliably right-click the Plasma desktop. The earlier plugin reload also crashed the session; the app does not reload KWin plugins.
 
-GNOME and X11 mapping interfaces are not implemented by this control; it is
-disabled with an explanation on unsupported desktops. Finger calibration is
-independent of this setting. Removing the app leaves the KDE mapping intact;
-restore it first if desired. On the tested Ubuntu Plasma 5.27 session the native
-pen side button produced middle-click before remapping. Accurate pen tracking
-does not imply the side button is mapped to right-click.
+The app restored the original native mapping after the failed tablet-tool test. A new login is needed to activate that restoration. GNOME and X11 pen mapping controls remain unsupported. Revisit selectable actions only with a proven device-position-aware implementation and physical tests across login.
 
-## Pen side button and recovery
-
-On KDE Plasma Wayland, the **Saved side-button action** control changes only the CF-19 pen side button. Desktop default removes the app's override; **Restore original saved mapping** returns to the mapping captured before the first change. A saved action becomes active after logout and login. The application does not restart KWin, and the saved choice is not proof that the current session is using it. GNOME and X11 pen mapping are not managed here.
-
-Front-button **Restore default assignments** replaces and saves all four assignments immediately. Button identification is separate from driver installation and cannot stop an installation in progress. Driver and shortcut backend controls are under **Advanced setup**.
-
-On Plasma 5.27, the previous pen-to-mouse-button mapping could place the click at the desktop cursor, often the center of the screen, instead of the pen tip. The mapping now emits a tablet-tool button event so KWin retains the pen's position. This behavior still requires physical verification after a new login. Existing saved mouse-button mappings are recognized so users can replace them without losing the original backup.
+Front-button **Restore default assignments** replaces and saves all four assignments immediately. Button identification cannot stop driver installation. Driver and shortcut backend controls are under **Advanced setup**.

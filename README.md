@@ -16,7 +16,7 @@ Other CF-19 revisions, pen calibration, other touch controllers, and
 other audio codecs are outside the tested scope. The detailed
 [documentation index](docs/README.md) explains each issue and its recovery path.
 
-The Buttons page also offers native **pen side-button click selection on KDE
+The Buttons page also offers **pen side-button default and restore controls on KDE
 Wayland** for the reference Wacom pen. This does not change pen or finger
 calibration; GNOME/X11 pen mapping is not implemented. See
 [pen mapping](docs/tablet-buttons.md#pen-side-button-kde-wayland).
